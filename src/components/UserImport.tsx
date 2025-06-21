@@ -198,10 +198,9 @@ const UserImport = () => {
     console.log('🚀 Iniciando processo de importação...');
     console.log('📁 Arquivo:', selectedFile.name, 'Tamanho:', selectedFile.size);
     
-    // Verificar autenticação antes de prosseguir
-    const session = await checkAuth();
-    if (!session || !session.user) {
-      console.error('❌ Usuário não autenticado');
+    // Verificar se o usuário está logado no contexto customizado
+    if (!user || !user.id) {
+      console.error('❌ Usuário não encontrado no contexto:', user);
       toast({
         title: "Erro",
         description: "Você precisa estar logado para importar usuários",
@@ -210,7 +209,7 @@ const UserImport = () => {
       return;
     }
 
-    console.log('✅ Usuário autenticado:', session.user.id);
+    console.log('✅ Usuário autenticado no contexto:', user.id);
     
     setUploading(true);
     try {
@@ -232,16 +231,12 @@ const UserImport = () => {
       const importFileData = {
         file_name: selectedFile.name,
         file_size: selectedFile.size,
-        imported_by: session.user.id, // Usando o ID da sessão ativa
+        imported_by: user.id, // Usando o ID do contexto customizado
         total_records: users.length,
         processed_records: 0,
         status: 'processing'
       };
       console.log('📋 Dados do arquivo a serem inseridos:', importFileData);
-
-      // Verificar novamente a sessão antes da inserção
-      const currentSession = await supabase.auth.getSession();
-      console.log('🔍 Verificação final da sessão antes da inserção:', currentSession.data.session ? 'OK' : 'ERRO');
 
       const { data: fileData, error: fileError } = await supabase
         .from('user_import_files_idm')
