@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 import StatsCard from './StatsCard';
@@ -184,13 +183,13 @@ const Dashboard = () => {
       isPositive: true,
     },
     {
-      title: 'Sistemas em Risco Alto',
-      value: '5',
+      title: 'Discrepâncias de Usuários',
+      value: '3',
       icon: 'ri-error-warning-line',
       iconBg: 'bg-red-100',
       iconColor: 'text-red-500',
       change: '',
-      changeText: 'sistemas sem usuários',
+      changeText: 'sistemas precisam análise',
       isPositive: false,
     },
   ];

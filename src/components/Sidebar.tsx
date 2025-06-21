@@ -1,7 +1,7 @@
 
 import React from 'react';
 
-type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'settings';
+type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'users' | 'settings';
 
 interface SidebarProps {
   activePage: ActivePage;
@@ -29,6 +29,11 @@ const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
       id: 'user-management' as ActivePage,
       label: 'Gestão de Usuários',
       icon: 'ri-user-settings-line',
+    },
+    {
+      id: 'users' as ActivePage,
+      label: 'Usuários',
+      icon: 'ri-group-line',
     },
     {
       id: 'settings' as ActivePage,

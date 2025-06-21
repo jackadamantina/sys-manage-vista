@@ -7,8 +7,9 @@ import SystemManagement from '../components/SystemManagement';
 import Settings from '../components/Settings';
 import Reports from '../components/Reports';
 import UserManagement from '../components/UserManagement';
+import Users from '../components/Users';
 
-type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'settings';
+type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'users' | 'settings';
 
 const Index = () => {
   const [activePage, setActivePage] = useState<ActivePage>('dashboard');
@@ -21,6 +22,8 @@ const Index = () => {
         return <Reports />;
       case 'user-management':
         return <UserManagement />;
+      case 'users':
+        return <Users />;
       case 'settings':
         return <Settings />;
       default:
@@ -36,6 +39,8 @@ const Index = () => {
         return 'Relatórios';
       case 'user-management':
         return 'Gestão de Usuários';
+      case 'users':
+        return 'Usuários';
       case 'settings':
         return 'Configurações';
       default:
