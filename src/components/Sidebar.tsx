@@ -1,35 +1,37 @@
 
 import React from 'react';
 
+type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'settings';
+
 interface SidebarProps {
-  activePage: string;
-  onPageChange: (page: string) => void;
+  activePage: ActivePage;
+  onPageChange: (page: ActivePage) => void;
 }
 
 const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
   const navigationItems = [
     {
-      id: 'dashboard',
+      id: 'dashboard' as ActivePage,
       label: 'Dashboard',
       icon: 'ri-dashboard-line',
     },
     {
-      id: 'system-management',
+      id: 'system-management' as ActivePage,
       label: 'Gestão de Sistemas',
       icon: 'ri-apps-line',
     },
     {
-      id: 'reports',
+      id: 'reports' as ActivePage,
       label: 'Relatórios',
       icon: 'ri-file-chart-line',
     },
     {
-      id: 'user-management',
+      id: 'user-management' as ActivePage,
       label: 'Gestão de Usuários',
       icon: 'ri-user-settings-line',
     },
     {
-      id: 'settings',
+      id: 'settings' as ActivePage,
       label: 'Configurações',
       icon: 'ri-settings-3-line',
     },
