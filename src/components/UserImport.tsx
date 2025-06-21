@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -243,39 +244,16 @@ const UserImport = () => {
       };
       console.log('📋 Dados do arquivo a serem inseridos:', importFileData);
 
-      // Tentar inserir com diferentes abordagens se necessário
-      let fileData;
-      try {
-        const result = await supabase
-          .from('user_import_files_idm')
-          .insert([importFileData])
-          .select()
-          .single();
-        
-        if (result.error) {
-          throw result.error;
-        }
-        fileData = result.data;
-      } catch (firstError) {
-        console.error('❌ Primeira tentativa falhou:', firstError);
-        
-        // Segunda tentativa: temporariamente desabilitar RLS se necessário
-        console.log('🔄 Tentando abordagem alternativa...');
-        
-        // Tentar inserir diretamente usando RPC se disponível
-        const { data: rpcResult, error: rpcError } = await supabase.rpc('insert_import_file', {
-          p_file_name: selectedFile.name,
-          p_file_size: selectedFile.size,
-          p_imported_by: user.id,
-          p_total_records: users.length
-        });
+      // Tentar inserir diretamente
+      const { data: fileData, error: fileError } = await supabase
+        .from('user_import_files_idm')
+        .insert([importFileData])
+        .select()
+        .single();
 
-        if (rpcError) {
-          console.error('❌ RPC também falhou:', rpcError);
-          throw firstError; // Lançar o erro original
-        }
-        
-        fileData = rpcResult;
+      if (fileError) {
+        console.error('❌ Erro ao inserir arquivo:', fileError);
+        throw new Error(`Erro ao registrar arquivo: ${fileError.message}`);
       }
 
       console.log('✅ Arquivo registrado com sucesso:', fileData);
