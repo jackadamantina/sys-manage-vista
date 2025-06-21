@@ -26,14 +26,14 @@ const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
       icon: 'ri-apps-line',
     },
     {
-      id: 'reports' as ActivePage,
-      label: 'Relatórios',
-      icon: 'ri-file-chart-line',
-    },
-    {
       id: 'users' as ActivePage,
       label: 'Usuários e Sistemas',
       icon: 'ri-group-line',
+    },
+    {
+      id: 'reports' as ActivePage,
+      label: 'Relatórios',
+      icon: 'ri-file-chart-line',
     },
     {
       id: 'settings' as ActivePage,
