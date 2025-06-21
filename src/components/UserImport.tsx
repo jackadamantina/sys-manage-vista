@@ -57,7 +57,6 @@ const UserImport = () => {
     }
   };
 
-  // Carregar histórico de importações
   const loadImportFiles = async () => {
     try {
       const { data, error } = await supabase
@@ -86,7 +85,7 @@ const UserImport = () => {
     loadData();
   }, []);
 
-  // Processar arquivo CSV/Excel
+  // Função corrigida para processar arquivo CSV/Excel
   const processFile = (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -94,36 +93,59 @@ const UserImport = () => {
       reader.onload = (e) => {
         try {
           const text = e.target?.result as string;
-          const lines = text.split('\n');
-          const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+          const lines = text.split('\n').filter(line => line.trim());
+          
+          if (lines.length === 0) {
+            reject(new Error('Arquivo vazio'));
+            return;
+          }
+
+          console.log('Processando arquivo com', lines.length, 'linhas');
+          
+          // Primeira linha são os cabeçalhos
+          const headerLine = lines[0];
+          const headers = headerLine.split(',').map(h => h.trim().toLowerCase());
+          
+          console.log('Cabeçalhos encontrados:', headers);
           
           const users = [];
+          
+          // Processar as linhas de dados (pular a primeira linha que é o cabeçalho)
           for (let i = 1; i < lines.length; i++) {
             const line = lines[i].trim();
             if (!line) continue;
             
             const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
+            console.log('Processando linha:', values);
+            
             const user: any = {};
             
+            // Mapear valores baseado nos cabeçalhos
             headers.forEach((header, index) => {
+              const value = values[index] || '';
+              
               if (header.includes('nome') || header.includes('name')) {
-                user.name = values[index];
+                user.name = value;
               } else if (header.includes('email')) {
-                user.email = values[index];
+                user.email = value;
               } else if (header.includes('usuario') || header.includes('username')) {
-                user.username = values[index];
+                user.username = value;
               } else if (header.includes('departamento') || header.includes('department')) {
-                user.department = values[index];
+                user.department = value;
               }
             });
             
-            if (user.name) {
+            // Verificar se pelo menos o nome foi preenchido
+            if (user.name && user.name.trim()) {
               users.push(user);
+              console.log('Usuário adicionado:', user);
             }
           }
           
+          console.log('Total de usuários processados:', users.length);
           resolve(users);
         } catch (error) {
+          console.error('Erro ao processar arquivo:', error);
           reject(error);
         }
       };
@@ -333,7 +355,6 @@ const UserImport = () => {
         </div>
       </div>
 
-      {/* Lista de Usuários Importados */}
       <div className="bg-white rounded shadow">
         <div className="p-6 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-800">
