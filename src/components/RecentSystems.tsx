@@ -22,7 +22,7 @@ const RecentSystems = () => {
   const fetchRecentSystems = async () => {
     try {
       const { data, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .select('id, name, url, responsible, created_at, updated_at')
         .order('created_at', { ascending: false })
         .limit(5);

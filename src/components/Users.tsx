@@ -71,7 +71,7 @@ const Users = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .select('id, name, description, url, created_at')
         .order('created_at', { ascending: false });
 

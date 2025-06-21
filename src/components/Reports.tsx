@@ -45,7 +45,7 @@ const Reports = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .select('*')
         .order('created_at', { ascending: false });
 

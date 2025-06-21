@@ -70,7 +70,7 @@ const GlobalUserSearch = () => {
   const loadSystems = async () => {
     try {
       const { data, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .select('id, name, description, url')
         .order('name', { ascending: true });
 
