@@ -1,5 +1,6 @@
 
 import React from 'react';
+import Logo from './Logo';
 
 type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'users' | 'settings';
 
@@ -44,8 +45,8 @@ const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
 
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
-      <div className="p-4 border-b border-gray-200 flex items-center">
-        <span className="text-2xl font-pacifico text-primary">logo</span>
+      <div className="p-4 border-b border-gray-200">
+        <Logo size="md" />
       </div>
       
       <div className="flex-1 overflow-y-auto py-4">
