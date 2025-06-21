@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import VersionInfoComponent from './VersionInfo';
@@ -134,7 +133,7 @@ const SystemManagement = () => {
               <div className="space-y-6">
                 <div>
                   <div className="flex items-center mb-2">
-                    <label className="block text-sm font-medium text-gray-700">Responsável</label>
+                    <label className="block text-sm font-medium text-gray-700">Responsável pelo sistema</label>
                     <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Pessoa responsável pela gestão do sistema">
                       <i className="ri-question-line"></i>
                     </div>
@@ -142,7 +141,21 @@ const SystemManagement = () => {
                   <input
                     type="text"
                     className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
-                    placeholder="Nome do responsável"
+                    placeholder="Nome do responsável pelo sistema"
+                  />
+                </div>
+
+                <div>
+                  <div className="flex items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Gestão de usuários</label>
+                    <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Pessoa ou time, responsável pela criação, atualização ou deleção dos usuários.">
+                      <i className="ri-question-line"></i>
+                    </div>
+                  </div>
+                  <input
+                    type="text"
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                    placeholder="Nome do responsável pela gestão de usuários"
                   />
                 </div>
 
