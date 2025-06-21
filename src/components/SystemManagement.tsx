@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,7 +31,7 @@ interface System {
   onboarding_type: string;
   offboarding_type: string;
   offboarding_priority: string;
-  named_users: boolean;
+  named_users: string;
   integrated_users: boolean;
   sso_configuration: string;
   region_blocking: string;
@@ -65,7 +64,7 @@ const SystemManagement = () => {
       onboarding_type: '',
       offboarding_type: '',
       offboarding_priority: '',
-      named_users: false,
+      named_users: '',
       integrated_users: false,
       sso_configuration: '',
       region_blocking: '',
@@ -381,7 +380,7 @@ const SystemManagement = () => {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Usuários Nomeados</FormLabel>
-                    <Select onValueChange={(value) => field.onChange(value === 'sim')} defaultValue={field.value ? 'sim' : 'nao'}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Usuários nomeados" />
@@ -390,6 +389,7 @@ const SystemManagement = () => {
                       <SelectContent>
                         <SelectItem value="sim">Sim</SelectItem>
                         <SelectItem value="nao">Não</SelectItem>
+                        <SelectItem value="sem-autenticacao">Sem Autenticação</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -925,7 +925,7 @@ const SystemManagement = () => {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <div className="space-y-1">
-                        <div className="text-xs">Nomeados: {system.named_users ? 'Sim' : 'Não'}</div>
+                        <div className="text-xs">Nomeados: {system.named_users === 'sim' ? 'Sim' : system.named_users === 'nao' ? 'Não' : system.named_users === 'sem-autenticacao' ? 'Sem Autenticação' : '-'}</div>
                         <div className="text-xs">Integrados: {system.integrated_users ? 'Sim' : 'Não'}</div>
                       </div>
                     </td>
