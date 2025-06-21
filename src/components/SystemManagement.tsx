@@ -99,7 +99,7 @@ const SystemManagement = () => {
       // Transform database data to match our interface
       const transformedData = data?.map(system => ({
         ...system,
-        named_users: system.named_users === true ? 'sim' : system.named_users === false ? 'nao' : system.named_users || ''
+        named_users: system.named_users === true ? 'sim' : system.named_users === false ? 'nao' : 'sem-autenticacao'
       })) || [];
 
       setSystems(transformedData);
@@ -132,9 +132,29 @@ const SystemManagement = () => {
     try {
       // Transform data for database insertion/update
       const dbData = {
-        ...data,
-        named_users: data.named_users === 'sim' ? true : data.named_users === 'nao' ? false : null
+        name: data.name,
+        description: data.description,
+        url: data.url,
+        hosting: data.hosting,
+        access_type: data.access_type,
+        responsible: data.responsible,
+        user_management_responsible: data.user_management_responsible,
+        password_complexity: data.password_complexity,
+        onboarding_type: data.onboarding_type,
+        offboarding_type: data.offboarding_type,
+        offboarding_priority: data.offboarding_priority,
+        named_users: data.named_users === 'sim' ? true : data.named_users === 'nao' ? false : null,
+        integrated_users: data.integrated_users,
+        sso_configuration: data.sso_configuration,
+        region_blocking: data.region_blocking,
+        mfa_configuration: data.mfa_configuration,
+        mfa_policy: data.mfa_policy,
+        mfa_sms_policy: data.mfa_sms_policy,
+        logs_status: data.logs_status,
+        log_types: data.log_types
       };
+
+      console.log('Dados para envio:', dbData);
 
       if (isEditing && editingId) {
         const { error } = await supabase
@@ -142,7 +162,10 @@ const SystemManagement = () => {
           .update(dbData)
           .eq('id', editingId);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao atualizar sistema:', error);
+          throw error;
+        }
 
         toast({
           title: "Sucesso",
@@ -156,7 +179,10 @@ const SystemManagement = () => {
             created_by: user.id
           }]);
 
-        if (error) throw error;
+        if (error) {
+          console.error('Erro ao inserir sistema:', error);
+          throw error;
+        }
 
         toast({
           title: "Sucesso",
@@ -173,7 +199,7 @@ const SystemManagement = () => {
       console.error('Erro ao salvar sistema:', error);
       toast({
         title: "Erro",
-        description: "Erro ao salvar sistema",
+        description: `Erro ao salvar sistema: ${error.message || 'Erro desconhecido'}`,
         variant: "destructive"
       });
     }
