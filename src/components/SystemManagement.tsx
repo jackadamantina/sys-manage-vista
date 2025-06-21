@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import VersionInfoComponent from './VersionInfo';
@@ -501,7 +500,7 @@ const SystemManagement = () => {
                 <div className="space-y-6">
                   <div>
                     <div className="flex items-center mb-2">
-                      <label className="block text-sm font-medium text-gray-700">Status dos Logs</label>
+                      <label className="block text-sm font-medium text-gray-700">Política de Logs</label>
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
@@ -522,7 +521,7 @@ const SystemManagement = () => {
                           className="mr-2"
                           onChange={handleLogsStatusChange}
                         />
-                        <span className="text-sm text-gray-700">Possui Logs</span>
+                        <span className="text-sm text-gray-700">Logs ativados</span>
                       </label>
                       <label className="flex items-center">
                         <input 
@@ -532,7 +531,7 @@ const SystemManagement = () => {
                           className="mr-2"
                           onChange={handleLogsStatusChange}
                         />
-                        <span className="text-sm text-gray-700">Sem Logs</span>
+                        <span className="text-sm text-gray-700">Logs inexistentes</span>
                       </label>
                     </div>
                   </div>
