@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -420,85 +421,6 @@ const SystemManagement = () => {
                 )}
               />
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <FormField
-                  control={form.control}
-                  name="mfa_configuration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Configuração MFA</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="MFA" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="habilitado">Habilitado</SelectItem>
-                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
-                          <SelectItem value="opcional">Opcional</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="mfa_policy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Política MFA</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={watchMfaConfiguration === 'desabilitado'}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Política MFA" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="obrigatorio">Obrigatório</SelectItem>
-                          <SelectItem value="opcional">Opcional</SelectItem>
-                          <SelectItem value="condicional">Condicional</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="mfa_sms_policy"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Política MFA SMS</FormLabel>
-                      <Select 
-                        onValueChange={field.onChange} 
-                        defaultValue={field.value}
-                        disabled={watchMfaConfiguration === 'desabilitado'}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="MFA SMS" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="habilitado">Habilitado</SelectItem>
-                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
-                          <SelectItem value="backup-only">Apenas Backup</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
-
               <FormField
                 control={form.control}
                 name="region_blocking"
@@ -527,7 +449,7 @@ const SystemManagement = () => {
             <div className="space-y-4">
               <h4 className="text-md font-medium text-gray-700 border-b pb-2">Gestão de Usuários</h4>
               
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="onboarding_type"
@@ -572,7 +494,9 @@ const SystemManagement = () => {
                     </FormItem>
                   )}
                 />
-                
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
                   name="offboarding_type"
@@ -595,30 +519,30 @@ const SystemManagement = () => {
                     </FormItem>
                   )}
                 />
+                
+                <FormField
+                  control={form.control}
+                  name="offboarding_priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prioridade Offboarding</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Prioridade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="alta">Alta</SelectItem>
+                          <SelectItem value="media">Média</SelectItem>
+                          <SelectItem value="baixa">Baixa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
-              
-              <FormField
-                control={form.control}
-                name="offboarding_priority"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Prioridade Offboarding</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Prioridade" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="alta">Alta</SelectItem>
-                        <SelectItem value="media">Média</SelectItem>
-                        <SelectItem value="baixa">Baixa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
             </div>
 
             {/* Logs e Auditoria */}
@@ -805,6 +729,91 @@ const SystemManagement = () => {
               </div>
             </div>
 
+            {/* Configurações MFA - movidas para o final antes de Complexidade de Senha */}
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Configurações MFA</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="mfa_configuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Configuração MFA</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="MFA" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="habilitado">Habilitado</SelectItem>
+                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
+                          <SelectItem value="opcional">Opcional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="mfa_policy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Política MFA</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={watchMfaConfiguration === 'desabilitado'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Política MFA" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="obrigatorio">Obrigatório</SelectItem>
+                          <SelectItem value="opcional">Opcional</SelectItem>
+                          <SelectItem value="condicional">Condicional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="mfa_sms_policy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Política MFA SMS</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={watchMfaConfiguration === 'desabilitado'}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="MFA SMS" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="habilitado">Habilitado</SelectItem>
+                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
+                          <SelectItem value="backup-only">Apenas Backup</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Complexidade de Senha - último item */}
             <div className="space-y-4">
               <FormField
                 control={form.control}
