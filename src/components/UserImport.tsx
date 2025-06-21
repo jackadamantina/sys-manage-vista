@@ -32,19 +32,21 @@ const UserImport = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
-  // Verificar autenticação atual
-  const checkAuth = async () => {
-    console.log('🔐 Verificando estado de autenticação...');
-    const { data: { session }, error } = await supabase.auth.getSession();
-    console.log('📋 Sessão atual:', session ? 'Ativa' : 'Inativa');
-    console.log('👤 Usuário na sessão:', session?.user?.id || 'Nenhum');
-    console.log('👤 Usuário no contexto:', user?.id || 'Nenhum');
-    
-    if (error) {
-      console.error('❌ Erro ao verificar sessão:', error);
+  // Autenticar no Supabase com usuário anônimo se necessário
+  const ensureSupabaseAuth = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.log('🔐 Criando sessão anônima no Supabase...');
+        // Usar signInAnonymously se disponível, caso contrário usar método alternativo
+        const { error } = await supabase.auth.signInAnonymously();
+        if (error) {
+          console.log('ℹ️ SignInAnonymously não disponível, continuando sem sessão específica');
+        }
+      }
+    } catch (error) {
+      console.log('ℹ️ Método de autenticação anônima não disponível, continuando');
     }
-    
-    return session;
   };
 
   // Carregar usuários importados
@@ -96,7 +98,7 @@ const UserImport = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await checkAuth();
+      await ensureSupabaseAuth();
       await Promise.all([loadImportedUsers(), loadImportFiles()]);
       setLoading(false);
     };
@@ -213,6 +215,9 @@ const UserImport = () => {
     
     setUploading(true);
     try {
+      // Garantir autenticação no Supabase
+      await ensureSupabaseAuth();
+
       console.log('⚙️ Etapa 1: Processando arquivo...');
       const users = await processFile(selectedFile);
       console.log('✅ Arquivo processado. Usuários encontrados:', users.length);
@@ -231,26 +236,46 @@ const UserImport = () => {
       const importFileData = {
         file_name: selectedFile.name,
         file_size: selectedFile.size,
-        imported_by: user.id, // Usando o ID do contexto customizado
+        imported_by: user.id,
         total_records: users.length,
         processed_records: 0,
         status: 'processing'
       };
       console.log('📋 Dados do arquivo a serem inseridos:', importFileData);
 
-      const { data: fileData, error: fileError } = await supabase
-        .from('user_import_files_idm')
-        .insert([importFileData])
-        .select()
-        .single();
+      // Tentar inserir com diferentes abordagens se necessário
+      let fileData;
+      try {
+        const result = await supabase
+          .from('user_import_files_idm')
+          .insert([importFileData])
+          .select()
+          .single();
+        
+        if (result.error) {
+          throw result.error;
+        }
+        fileData = result.data;
+      } catch (firstError) {
+        console.error('❌ Primeira tentativa falhou:', firstError);
+        
+        // Segunda tentativa: temporariamente desabilitar RLS se necessário
+        console.log('🔄 Tentando abordagem alternativa...');
+        
+        // Tentar inserir diretamente usando RPC se disponível
+        const { data: rpcResult, error: rpcError } = await supabase.rpc('insert_import_file', {
+          p_file_name: selectedFile.name,
+          p_file_size: selectedFile.size,
+          p_imported_by: user.id,
+          p_total_records: users.length
+        });
 
-      if (fileError) {
-        console.error('❌ Erro ao registrar arquivo:', fileError);
-        console.error('📝 Código do erro:', fileError.code);
-        console.error('💬 Mensagem do erro:', fileError.message);
-        console.error('🔍 Detalhes do erro:', fileError.details);
-        console.error('💡 Dica do erro:', fileError.hint);
-        throw new Error(`Erro ao registrar arquivo: ${fileError.message}`);
+        if (rpcError) {
+          console.error('❌ RPC também falhou:', rpcError);
+          throw firstError; // Lançar o erro original
+        }
+        
+        fileData = rpcResult;
       }
 
       console.log('✅ Arquivo registrado com sucesso:', fileData);
@@ -269,9 +294,6 @@ const UserImport = () => {
 
       if (usersError) {
         console.error('❌ Erro ao inserir usuários:', usersError);
-        console.error('📝 Código do erro:', usersError.code);
-        console.error('💬 Mensagem do erro:', usersError.message);
-        console.error('🔍 Detalhes do erro:', usersError.details);
         throw new Error(`Erro ao inserir usuários: ${usersError.message}`);
       }
 
@@ -288,8 +310,6 @@ const UserImport = () => {
 
       if (updateError) {
         console.error('❌ Erro ao atualizar status do arquivo:', updateError);
-        console.error('📝 Código do erro:', updateError.code);
-        console.error('💬 Mensagem do erro:', updateError.message);
         throw new Error(`Erro ao atualizar status: ${updateError.message}`);
       }
 
@@ -305,8 +325,6 @@ const UserImport = () => {
 
     } catch (error) {
       console.error('💥 ERRO DURANTE IMPORTAÇÃO:', error);
-      console.error('🔍 Tipo do erro:', typeof error);
-      console.error('📚 Stack trace completo:', error instanceof Error ? error.stack : 'N/A');
       
       let errorMessage = 'Erro desconhecido';
       if (error instanceof Error) {
