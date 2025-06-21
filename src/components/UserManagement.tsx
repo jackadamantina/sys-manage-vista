@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import CreateUserModal from './CreateUserModal';
 
 type UserRole = 'administrator' | 'user' | 'viewer';
 
@@ -13,6 +15,7 @@ interface User {
 }
 
 const UserManagement = () => {
+  const { user: currentUser } = useAuth();
   const [users] = useState<User[]>([
     {
       id: 1,
@@ -39,6 +42,9 @@ const UserManagement = () => {
       lastLogin: '15/06/2025',
     },
   ]);
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const isAdmin = currentUser?.role === 'admin';
 
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
@@ -83,11 +89,30 @@ const UserManagement = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-800">Gestão de Usuários</h2>
-        <button className="px-4 py-2 bg-primary text-white rounded-button flex items-center">
-          <i className="ri-user-add-line mr-2"></i>
-          Novo Usuário
-        </button>
+        {isAdmin && (
+          <button 
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 bg-primary text-white rounded-button flex items-center"
+          >
+            <i className="ri-user-add-line mr-2"></i>
+            Novo Usuário
+          </button>
+        )}
       </div>
+
+      {!isAdmin && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+          <div className="flex">
+            <i className="ri-information-line text-yellow-400 mr-3 mt-0.5"></i>
+            <div>
+              <h3 className="text-sm font-medium text-yellow-800">Acesso Limitado</h3>
+              <p className="text-sm text-yellow-700 mt-1">
+                Apenas administradores podem criar e gerenciar usuários do sistema.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* User Roles Info */}
       <div className="bg-white rounded shadow p-6">
@@ -196,12 +221,16 @@ const UserManagement = () => {
                       <button className="text-gray-500 hover:text-primary">
                         <i className="ri-eye-line"></i>
                       </button>
-                      <button className="text-gray-500 hover:text-primary">
-                        <i className="ri-edit-line"></i>
-                      </button>
-                      <button className="text-gray-500 hover:text-red-500">
-                        <i className="ri-delete-bin-line"></i>
-                      </button>
+                      {isAdmin && (
+                        <>
+                          <button className="text-gray-500 hover:text-primary">
+                            <i className="ri-edit-line"></i>
+                          </button>
+                          <button className="text-gray-500 hover:text-red-500">
+                            <i className="ri-delete-bin-line"></i>
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -210,6 +239,14 @@ const UserManagement = () => {
           </table>
         </div>
       </div>
+
+      {/* Modal para criar usuário */}
+      {showCreateModal &&isAdmin && (
+        <CreateUserModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+        />
+      )}
     </div>
   );
 };

@@ -316,6 +316,38 @@ const SecurityTab = ({ onSave }: { onSave: () => void }) => (
       </div>
     </div>
 
+    <div className="grid grid-cols-2 gap-6">
+      <div>
+        <div className="flex items-center mb-2">
+          <label className="block text-sm font-medium text-gray-700">Bloqueio por Região</label>
+          <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Define se o sistema bloqueia acessos por região geográfica">
+            <i className="ri-question-line"></i>
+          </div>
+        </div>
+        <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+          <option value="">Selecione o status</option>
+          <option value="applied">Aplicado</option>
+          <option value="not-applied">Não Aplicado</option>
+          <option value="not-available">Não Disponível</option>
+        </select>
+      </div>
+
+      <div>
+        <div className="flex items-center mb-2">
+          <label className="block text-sm font-medium text-gray-700">MFA Aplicado</label>
+          <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Define se o sistema utiliza autenticação multifator (MFA)">
+            <i className="ri-question-line"></i>
+          </div>
+        </div>
+        <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+          <option value="">Selecione o status</option>
+          <option value="applied">Aplicado</option>
+          <option value="not-applied">Não Aplicado</option>
+          <option value="not-available">Não Disponível</option>
+        </select>
+      </div>
+    </div>
+
     <div>
       <label className="block text-sm font-medium text-gray-700 mb-2">Integração</label>
       <div className="grid grid-cols-2 gap-4">
@@ -367,44 +399,79 @@ const LogsTab = ({ onSave }: { onSave: () => void }) => (
 
     <div>
       <div className="flex items-center mb-2">
-        <label className="block text-sm font-medium text-gray-700">Tipos de Logs</label>
-        <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Selecione os tipos de logs que deseja monitorar">
+        <label className="block text-sm font-medium text-gray-700">Status dos Logs</label>
+        <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Define se o sistema possui ou não sistema de logs">
           <i className="ri-question-line"></i>
         </div>
       </div>
-      <div className="space-y-2">
+      <div className="flex space-x-4 mb-4">
         <label className="flex items-center">
-          <input type="checkbox" name="log_types" value="system" className="mr-2" />
-          <span className="text-sm text-gray-700">Logs do Sistema</span>
+          <input type="radio" name="logs_status" value="enabled" className="mr-2" />
+          <span className="text-sm text-gray-700">Possui Logs</span>
         </label>
         <label className="flex items-center">
-          <input type="checkbox" name="log_types" value="application" className="mr-2" />
-          <span className="text-sm text-gray-700">Logs da Aplicação</span>
-        </label>
-        <label className="flex items-center">
-          <input type="checkbox" name="log_types" value="access" className="mr-2" />
-          <span className="text-sm text-gray-700">Logs de Acesso</span>
+          <input type="radio" name="logs_status" value="disabled" className="mr-2" />
+          <span className="text-sm text-gray-700">Sem Logs</span>
         </label>
       </div>
     </div>
 
-    <div>
-      <div className="flex items-center mb-2">
-        <label className="block text-sm font-medium text-gray-700">Retenção</label>
-        <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Período de retenção dos logs em dias">
-          <i className="ri-question-line"></i>
+    <div id="logs-config" className="space-y-6">
+      <div>
+        <div className="flex items-center mb-2">
+          <label className="block text-sm font-medium text-gray-700">Tipos de Logs</label>
+          <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Selecione os tipos de logs que deseja monitorar">
+            <i className="ri-question-line"></i>
+          </div>
+        </div>
+        <div className="space-y-2">
+          <label className="flex items-center">
+            <input type="checkbox" name="log_types" value="system" className="mr-2" />
+            <span className="text-sm text-gray-700">Logs do Sistema</span>
+          </label>
+          <label className="flex items-center">
+            <input type="checkbox" name="log_types" value="application" className="mr-2" />
+            <span className="text-sm text-gray-700">Logs da Aplicação</span>
+          </label>
+          <label className="flex items-center">
+            <input type="checkbox" name="log_types" value="access" className="mr-2" />
+            <span className="text-sm text-gray-700">Logs de Acesso</span>
+          </label>
         </div>
       </div>
-      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
-        <option value="">Selecione o período</option>
-        <option value="30">30 dias</option>
-        <option value="60">60 dias</option>
-        <option value="90">90 dias</option>
-        <option value="180">180 dias</option>
-        <option value="365">1 ano</option>
-        <option value="custom">Personalizado</option>
-      </select>
+
+      <div>
+        <div className="flex items-center mb-2">
+          <label className="block text-sm font-medium text-gray-700">Retenção</label>
+          <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Período de retenção dos logs em dias">
+            <i className="ri-question-line"></i>
+          </div>
+        </div>
+        <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+          <option value="">Selecione o período</option>
+          <option value="30">30 dias</option>
+          <option value="60">60 dias</option>
+          <option value="90">90 dias</option>
+          <option value="180">180 dias</option>
+          <option value="365">1 ano</option>
+          <option value="custom">Personalizado</option>
+        </select>
+      </div>
     </div>
+
+    <script>
+      // Script para mostrar/ocultar configurações de logs baseado na seleção
+      document.addEventListener('change', function(e) {
+        if (e.target.name === 'logs_status') {
+          const logsConfig = document.getElementById('logs-config');
+          if (e.target.value === 'disabled') {
+            logsConfig.style.display = 'none';
+          } else {
+            logsConfig.style.display = 'block';
+          }
+        }
+      });
+    </script>
   </form>
 );
 

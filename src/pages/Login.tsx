@@ -1,252 +1,126 @@
 
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import Logo from '../components/Logo';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 const Login = () => {
-  const [loginData, setLoginData] = useState({
-    email: '',
-    password: ''
-  });
-
-  const [registerData, setRegisterData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-    username: '',
-    fullName: ''
-  });
-
-  const [isLoading, setIsLoading] = useState(false);
-  const { login, register, user } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { login, user } = useAuth();
   const navigate = useNavigate();
 
-  // Redirecionar se já estiver logado
   useEffect(() => {
     if (user) {
       navigate('/');
     }
   }, [user, navigate]);
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!loginData.email || !loginData.password) {
-      return;
-    }
-
-    setIsLoading(true);
-    const success = await login(loginData.email, loginData.password);
-    
-    if (success) {
-      navigate('/');
-    }
-    setIsLoading(false);
-  };
-
-  const handleRegister = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!registerData.email || !registerData.password || !registerData.username || !registerData.fullName) {
+    if (!email || !password) {
+      toast.error('Por favor, preencha todos os campos');
       return;
     }
 
-    if (registerData.password !== registerData.confirmPassword) {
-      return;
+    setLoading(true);
+    try {
+      const success = await login(email, password);
+      if (success) {
+        navigate('/');
+      }
+    } catch (error) {
+      console.error('Erro no login:', error);
+      toast.error('Erro interno do sistema');
+    } finally {
+      setLoading(false);
     }
-
-    setIsLoading(true);
-    const success = await register(
-      registerData.email,
-      registerData.password,
-      registerData.username,
-      registerData.fullName
-    );
-    
-    if (success) {
-      setRegisterData({
-        email: '',
-        password: '',
-        confirmPassword: '',
-        username: '',
-        fullName: ''
-      });
-    }
-    setIsLoading(false);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full">
-        <div className="text-center mb-8">
-          <Logo size="lg" />
-        </div>
-
-        <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-2xl font-bold text-gray-900">
-              Acesso ao Sistema
-            </CardTitle>
-            <CardDescription>
-              Faça login ou crie uma nova conta
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="login" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Login</TabsTrigger>
-                <TabsTrigger value="register">Cadastro</TabsTrigger>
-              </TabsList>
-              
-              <TabsContent value="login">
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={loginData.email}
-                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                      required
-                      placeholder="seu@email.com"
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                      Senha
-                    </label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={loginData.password}
-                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                      required
-                      placeholder="Sua senha"
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Entrando...' : 'Entrar'}
-                  </Button>
-                </form>
-
-                <div className="mt-4 p-4 bg-gray-50 rounded-md">
-                  <p className="text-sm text-gray-600 mb-2">Usuários de teste:</p>
-                  <div className="text-xs text-gray-500 space-y-1">
-                    <div>Admin: admin@idm.com / admin123</div>
-                    <div>Usuário: ricardo@idm.com / 123456</div>
-                  </div>
-                </div>
-              </TabsContent>
-              
-              <TabsContent value="register">
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div>
-                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome Completo
-                    </label>
-                    <Input
-                      id="fullName"
-                      type="text"
-                      value={registerData.fullName}
-                      onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
-                      required
-                      placeholder="Seu nome completo"
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
-                      Nome de Usuário
-                    </label>
-                    <Input
-                      id="username"
-                      type="text"
-                      value={registerData.username}
-                      onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
-                      required
-                      placeholder="Seu nome de usuário"
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <Input
-                      id="register-email"
-                      type="email"
-                      value={registerData.email}
-                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                      required
-                      placeholder="seu@email.com"
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-2">
-                      Senha
-                    </label>
-                    <Input
-                      id="register-password"
-                      type="password"
-                      value={registerData.password}
-                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                      required
-                      placeholder="Sua senha"
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
-                      Confirmar Senha
-                    </label>
-                    <Input
-                      id="confirm-password"
-                      type="password"
-                      value={registerData.confirmPassword}
-                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
-                      required
-                      placeholder="Confirme sua senha"
-                      disabled={isLoading}
-                    />
-                  </div>
-
-                  <Button 
-                    type="submit" 
-                    className="w-full"
-                    disabled={isLoading || registerData.password !== registerData.confirmPassword}
-                  >
-                    {isLoading ? 'Criando conta...' : 'Criar Conta'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-
-        <div className="mt-6 text-center">
-          <p className="text-xs text-gray-500">
-            © 2024 IDM-Experience. Todos os direitos reservados.
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div>
+          <div className="mx-auto h-12 w-12 flex items-center justify-center rounded-full bg-primary">
+            <i className="ri-shield-keyhole-line text-white text-2xl"></i>
+          </div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            IDM Experience
+          </h2>
+          <p className="mt-2 text-center text-sm text-gray-600">
+            Faça login para acessar o sistema
           </p>
         </div>
+        
+        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <div className="space-y-4">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email
+              </label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                required
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                placeholder="Digite seu email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
+            <div>
+              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                Senha
+              </label>
+              <input
+                id="password"
+                name="password"
+                type="password"
+                autoComplete="current-password"
+                required
+                className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-primary hover:bg-primary-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {loading ? (
+                <div className="flex items-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Entrando...
+                </div>
+              ) : (
+                'Entrar'
+              )}
+            </button>
+          </div>
+
+          <div className="text-center">
+            <p className="text-sm text-gray-600">
+              Novos usuários devem ser criados pelo administrador do sistema
+            </p>
+          </div>
+
+          <div className="mt-8 bg-gray-100 p-4 rounded-md">
+            <h3 className="text-sm font-medium text-gray-700 mb-2">Usuários de teste:</h3>
+            <div className="text-xs text-gray-600 space-y-1">
+              <div><strong>Admin:</strong> admin@idm.com / admin123</div>
+              <div><strong>Usuário:</strong> ricardo@idm.com / 123456</div>
+            </div>
+          </div>
+        </form>
       </div>
     </div>
   );
