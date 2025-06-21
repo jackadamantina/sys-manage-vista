@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import VersionInfoComponent from './VersionInfo';
@@ -69,11 +68,11 @@ const SystemManagement = () => {
       const systemData = {
         ...formData,
         version: newVersion.version,
-        created_by: user.user_id
+        created_by: user.id
       };
 
       const { data, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .insert([systemData])
         .select();
 
