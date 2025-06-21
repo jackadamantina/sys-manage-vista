@@ -374,55 +374,51 @@ const SystemManagement = () => {
             <div className="space-y-4">
               <h4 className="text-md font-medium text-gray-700 border-b pb-2">Segurança e Autenticação</h4>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="password_complexity"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Complexidade de Senha</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Selecione a complexidade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="low">Baixa</SelectItem>
-                          <SelectItem value="medium">Média</SelectItem>
-                          <SelectItem value="high">Alta</SelectItem>
-                          <SelectItem value="very-high">Muito Alta</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                
-                <FormField
-                  control={form.control}
-                  name="sso_configuration"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Configuração SSO</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Configuração SSO" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="habilitado">Habilitado</SelectItem>
-                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
-                          <SelectItem value="desenvolver">Desenvolver</SelectItem>
-                          <SelectItem value="upgrade-licenca">Upgrade de Licença</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="named_users"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Usuários Nomeados</FormLabel>
+                    <Select onValueChange={(value) => field.onChange(value === 'sim')} defaultValue={field.value ? 'sim' : 'nao'}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Usuários nomeados" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="sim">Sim</SelectItem>
+                        <SelectItem value="nao">Não</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <FormField
+                control={form.control}
+                name="sso_configuration"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Configuração SSO</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Configuração SSO" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="habilitado">Habilitado</SelectItem>
+                        <SelectItem value="desabilitado">Desabilitado</SelectItem>
+                        <SelectItem value="desenvolver">Desenvolver</SelectItem>
+                        <SelectItem value="upgrade-licenca">Upgrade de Licença</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormField
@@ -554,6 +550,28 @@ const SystemManagement = () => {
                     </FormItem>
                   )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="integrated_users"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Usuários Integrados</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === 'sim')} defaultValue={field.value ? 'sim' : 'nao'}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Usuários integrados" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="sim">Sim</SelectItem>
+                          <SelectItem value="nao">Não</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
                 
                 <FormField
                   control={form.control}
@@ -577,76 +595,30 @@ const SystemManagement = () => {
                     </FormItem>
                   )}
                 />
-                
-                <FormField
-                  control={form.control}
-                  name="offboarding_priority"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Prioridade Offboarding</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Prioridade" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="alta">Alta</SelectItem>
-                          <SelectItem value="media">Média</SelectItem>
-                          <SelectItem value="baixa">Baixa</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="named_users"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Usuários Nomeados</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value === 'sim')} defaultValue={field.value ? 'sim' : 'nao'}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Usuários nomeados" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="sim">Sim</SelectItem>
-                          <SelectItem value="nao">Não</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="integrated_users"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Usuários Integrados</FormLabel>
-                      <Select onValueChange={(value) => field.onChange(value === 'sim')} defaultValue={field.value ? 'sim' : 'nao'}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Usuários integrados" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="sim">Sim</SelectItem>
-                          <SelectItem value="nao">Não</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="offboarding_priority"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Prioridade Offboarding</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Prioridade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="alta">Alta</SelectItem>
+                        <SelectItem value="media">Média</SelectItem>
+                        <SelectItem value="baixa">Baixa</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Logs e Auditoria */}
@@ -831,6 +803,32 @@ const SystemManagement = () => {
                   )}
                 />
               </div>
+            </div>
+
+            <div className="space-y-4">
+              <FormField
+                control={form.control}
+                name="password_complexity"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Complexidade de Senha</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a complexidade" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="low">Baixa</SelectItem>
+                        <SelectItem value="medium">Média</SelectItem>
+                        <SelectItem value="high">Alta</SelectItem>
+                        <SelectItem value="very-high">Muito Alta</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             <div className="flex space-x-4">
