@@ -1,13 +1,14 @@
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
 import StatsCard from './StatsCard';
 import RecentSystems from './RecentSystems';
 import RecentAlerts from './RecentAlerts';
+import { supabase } from '@/integrations/supabase/client';
 
 const Dashboard = () => {
   const resourceChartRef = useRef<HTMLDivElement>(null);
   const securityChartRef = useRef<HTMLDivElement>(null);
+  const [importedUsersCount, setImportedUsersCount] = useState(0);
 
   // Mock data for systems - in real app this would come from API/database
   const systems = [
@@ -69,10 +70,10 @@ const Dashboard = () => {
 
   // Calculate statistics
   const totalSystems = systems.length;
-  const totalUsers = systems.reduce((sum, system) => sum + system.totalUsers, 0);
   const systemsWithMFA = systems.filter(system => system.mfaEnabled).length;
 
   useEffect(() => {
+    fetchImportedUsersCount();
     // Resource Distribution Chart
     if (resourceChartRef.current) {
       const resourceChart = echarts.init(resourceChartRef.current);
@@ -215,6 +216,23 @@ const Dashboard = () => {
     }
   }, []);
 
+  const fetchImportedUsersCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('imported_users_idm')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Erro ao buscar contagem de usuários importados:', error);
+        return;
+      }
+
+      setImportedUsersCount(count || 0);
+    } catch (error) {
+      console.error('Erro ao buscar contagem de usuários importados:', error);
+    }
+  };
+
   const statsData = [
     {
       title: 'Total de Sistemas',
@@ -228,12 +246,12 @@ const Dashboard = () => {
     },
     {
       title: 'Usuários Ativos',
-      value: totalUsers.toLocaleString('pt-BR'),
+      value: importedUsersCount.toLocaleString('pt-BR'),
       icon: 'ri-user-line',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-500',
-      change: '+8%',
-      changeText: 'desde o mês passado',
+      change: importedUsersCount > 0 ? 'Base da verdade' : 'Importar usuários',
+      changeText: 'usuários na base de dados',
       isPositive: true,
     },
     {

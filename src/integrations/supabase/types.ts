@@ -135,6 +135,42 @@ export type Database = {
         }
         Relationships: []
       }
+      imported_users_idm: {
+        Row: {
+          created_at: string
+          department: string | null
+          email: string | null
+          id: string
+          imported_at: string
+          name: string
+          status: string | null
+          updated_at: string
+          username: string | null
+        }
+        Insert: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          id?: string
+          imported_at?: string
+          name: string
+          status?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Update: {
+          created_at?: string
+          department?: string | null
+          email?: string | null
+          id?: string
+          imported_at?: string
+          name?: string
+          status?: string | null
+          updated_at?: string
+          username?: string | null
+        }
+        Relationships: []
+      }
       systems: {
         Row: {
           access_type: string | null
