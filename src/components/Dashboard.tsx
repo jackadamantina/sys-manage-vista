@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef } from 'react';
 import * as echarts from 'echarts';
 import StatsCard from './StatsCard';
@@ -7,6 +8,69 @@ import RecentAlerts from './RecentAlerts';
 const Dashboard = () => {
   const resourceChartRef = useRef<HTMLDivElement>(null);
   const securityChartRef = useRef<HTMLDivElement>(null);
+
+  // Mock data for systems - in real app this would come from API/database
+  const systems = [
+    {
+      id: 1,
+      name: 'Sistema de RH',
+      description: 'Sistema para gestão de recursos humanos da empresa',
+      url: 'https://rh.empresa.com',
+      createdAt: '2024-01-15',
+      totalUsers: 145,
+      mfaEnabled: true
+    },
+    {
+      id: 2,
+      name: 'Portal Financeiro',
+      description: 'Portal para controle e gestão financeira',
+      url: 'https://financeiro.empresa.com',
+      createdAt: '2024-02-20',
+      totalUsers: 89,
+      mfaEnabled: true
+    },
+    {
+      id: 3,
+      name: 'Sistema de Vendas',
+      description: 'Plataforma para gerenciamento de vendas e CRM',
+      url: 'https://vendas.empresa.com',
+      createdAt: '2024-03-10',
+      totalUsers: 234,
+      mfaEnabled: false
+    },
+    {
+      id: 4,
+      name: 'Portal do Cliente',
+      description: 'Portal de autoatendimento para clientes',
+      url: 'https://cliente.empresa.com',
+      createdAt: '2024-03-25',
+      totalUsers: 567,
+      mfaEnabled: true
+    },
+    {
+      id: 5,
+      name: 'Sistema de Estoque',
+      description: 'Sistema para controle de estoque e inventário',
+      url: 'https://estoque.empresa.com',
+      createdAt: '2024-04-10',
+      totalUsers: 78,
+      mfaEnabled: false
+    },
+    {
+      id: 6,
+      name: 'Portal de Comunicação',
+      description: 'Portal interno para comunicação empresarial',
+      url: 'https://comunicacao.empresa.com',
+      createdAt: '2024-04-22',
+      totalUsers: 141,
+      mfaEnabled: true
+    }
+  ];
+
+  // Calculate statistics
+  const totalSystems = systems.length;
+  const totalUsers = systems.reduce((sum, system) => sum + system.totalUsers, 0);
+  const systemsWithMFA = systems.filter(system => system.mfaEnabled).length;
 
   useEffect(() => {
     // Resource Distribution Chart
@@ -154,17 +218,17 @@ const Dashboard = () => {
   const statsData = [
     {
       title: 'Total de Sistemas',
-      value: '42',
+      value: totalSystems.toString(),
       icon: 'ri-apps-line',
       iconBg: 'bg-blue-100',
       iconColor: 'text-primary',
-      change: '+12%',
-      changeText: 'desde o mês passado',
+      change: '+2',
+      changeText: 'novos sistemas este mês',
       isPositive: true,
     },
     {
       title: 'Usuários Ativos',
-      value: '1,254',
+      value: totalUsers.toLocaleString('pt-BR'),
       icon: 'ri-user-line',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-500',
@@ -174,12 +238,12 @@ const Dashboard = () => {
     },
     {
       title: 'Sistemas com MFA',
-      value: '78%',
+      value: systemsWithMFA.toString(),
       icon: 'ri-shield-check-line',
       iconBg: 'bg-purple-100',
       iconColor: 'text-purple-500',
-      change: '+5%',
-      changeText: 'desde o mês passado',
+      change: `${Math.round((systemsWithMFA / totalSystems) * 100)}%`,
+      changeText: 'dos sistemas totais',
       isPositive: true,
     },
     {
