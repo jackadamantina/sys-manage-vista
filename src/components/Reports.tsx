@@ -20,7 +20,9 @@ interface System {
 
 const Reports = () => {
   const [systems, setSystems] = useState<System[]>([]);
+  const [filteredSystems, setFilteredSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState(true);
+  const [queryExecuted, setQueryExecuted] = useState(false);
   const { toast } = useToast();
   
   const [queryFilters, setQueryFilters] = useState({
@@ -58,6 +60,9 @@ const Reports = () => {
       }
 
       setSystems(data || []);
+      if (!queryExecuted) {
+        setFilteredSystems(data || []);
+      }
     } catch (error) {
       console.error('Erro ao carregar sistemas:', error);
       toast({
@@ -84,8 +89,74 @@ const Reports = () => {
   const executeQuery = () => {
     console.log('Executando query com filtros:', queryFilters);
     console.log('Versão do sistema no momento da consulta:', currentVersion);
-    // Aqui implementaria a lógica de query incluindo versionamento
+    
+    let filtered = [...systems];
+
+    // Aplicar filtros
+    if (queryFilters.system.trim()) {
+      filtered = filtered.filter(system => 
+        system.name.toLowerCase().includes(queryFilters.system.toLowerCase()) ||
+        (system.description && system.description.toLowerCase().includes(queryFilters.system.toLowerCase()))
+      );
+    }
+
+    if (queryFilters.responsible.trim()) {
+      filtered = filtered.filter(system => 
+        system.responsible && system.responsible.toLowerCase().includes(queryFilters.responsible.toLowerCase())
+      );
+    }
+
+    if (queryFilters.hosting) {
+      filtered = filtered.filter(system => system.hosting === queryFilters.hosting);
+    }
+
+    if (queryFilters.access) {
+      filtered = filtered.filter(system => system.access_type === queryFilters.access);
+    }
+
+    if (queryFilters.sso) {
+      filtered = filtered.filter(system => {
+        if (queryFilters.sso === 'available') {
+          return system.sso_configuration === 'disponível';
+        } else if (queryFilters.sso === 'not-available') {
+          return system.sso_configuration === 'não disponível';
+        } else if (queryFilters.sso === 'in-development') {
+          return system.sso_configuration === 'desenvolver';
+        } else if (queryFilters.sso === 'license-upgrade') {
+          return system.sso_configuration === 'upgrade de licença';
+        }
+        return true;
+      });
+    }
+
+    setFilteredSystems(filtered);
+    setQueryExecuted(true);
+
+    toast({
+      title: "Consulta Executada",
+      description: `Encontrados ${filtered.length} sistema(s) com os filtros aplicados`,
+    });
   };
+
+  const clearFilters = () => {
+    setQueryFilters({
+      system: '',
+      responsible: '',
+      hosting: '',
+      access: '',
+      namedUsers: '',
+      sso: '',
+      integration: '',
+      logTypes: [],
+      retention: '',
+      versionFrom: '',
+      versionTo: ''
+    });
+    setFilteredSystems(systems);
+    setQueryExecuted(false);
+  };
+
+  const systemsToDisplay = queryExecuted ? filteredSystems : systems;
 
   return (
     <div className="space-y-6">
@@ -99,78 +170,6 @@ const Reports = () => {
 
       {/* Versão do Sistema para Relatórios */}
       <VersionInfoComponent versionInfo={currentVersion} />
-
-      {/* Listagem de Sistemas */}
-      <div className="bg-white rounded shadow">
-        <div className="p-6 border-b border-gray-200">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-800">Sistemas Cadastrados</h3>
-              <p className="text-sm text-gray-500 mt-1">Lista completa de todos os sistemas registrados no portal</p>
-            </div>
-            <button 
-              onClick={loadSystems}
-              className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded flex items-center"
-            >
-              <i className="ri-refresh-line mr-1"></i>
-              Atualizar
-            </button>
-          </div>
-        </div>
-        <div className="p-6">
-          {loading ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-gray-500">Carregando sistemas...</div>
-            </div>
-          ) : systems.length === 0 ? (
-            <div className="flex items-center justify-center py-8">
-              <div className="text-center">
-                <i className="ri-database-line text-4xl text-gray-300 mb-2"></i>
-                <p className="text-gray-500">Nenhum sistema cadastrado</p>
-                <p className="text-sm text-gray-400">Cadastre um sistema na página de Gestão de Sistemas</p>
-              </div>
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome do Sistema</TableHead>
-                  <TableHead>Descrição</TableHead>
-                  <TableHead>URL</TableHead>
-                  <TableHead>Hosting</TableHead>
-                  <TableHead>Responsável</TableHead>
-                  <TableHead>Data de Cadastro</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {systems.map((system) => (
-                  <TableRow key={system.id}>
-                    <TableCell className="font-medium">{system.name}</TableCell>
-                    <TableCell>{system.description || '-'}</TableCell>
-                    <TableCell>
-                      {system.url ? (
-                        <a 
-                          href={system.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary-dark hover:underline"
-                        >
-                          {system.url}
-                        </a>
-                      ) : '-'}
-                    </TableCell>
-                    <TableCell>
-                      <span className="capitalize">{system.hosting || '-'}</span>
-                    </TableCell>
-                    <TableCell>{system.responsible || '-'}</TableCell>
-                    <TableCell>{new Date(system.created_at).toLocaleDateString('pt-BR')}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          )}
-        </div>
-      </div>
 
       {/* Query Builder */}
       <div className="bg-white rounded shadow p-6">
@@ -254,8 +253,8 @@ const Reports = () => {
               onChange={(e) => handleFilterChange('access', e.target.value)}
             >
               <option value="">Todos</option>
-              <option value="internal">Interno</option>
-              <option value="public">Público</option>
+              <option value="interno">Interno</option>
+              <option value="publico">Público</option>
             </select>
           </div>
 
@@ -289,17 +288,109 @@ const Reports = () => {
         </div>
 
         <div className="flex justify-between items-center">
-          <button 
-            onClick={executeQuery}
-            className="px-6 py-2 bg-primary text-white rounded-button flex items-center"
-          >
-            <i className="ri-search-line mr-2"></i>
-            Executar Consulta
-          </button>
+          <div className="flex space-x-4">
+            <button 
+              onClick={executeQuery}
+              className="px-6 py-2 bg-primary text-white rounded-button flex items-center"
+            >
+              <i className="ri-search-line mr-2"></i>
+              Executar Consulta
+            </button>
+            <button 
+              onClick={clearFilters}
+              className="px-4 py-2 text-gray-600 border border-gray-300 rounded-button flex items-center hover:bg-gray-50 transition-colors"
+            >
+              <i className="ri-refresh-line mr-2"></i>
+              Limpar Filtros
+            </button>
+          </div>
           <button className="px-4 py-2 text-primary border border-primary rounded-button flex items-center hover:bg-primary hover:text-white transition-colors">
             <i className="ri-download-line mr-2"></i>
             Exportar Resultados
           </button>
+        </div>
+      </div>
+
+      {/* Listagem de Sistemas */}
+      <div className="bg-white rounded shadow">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-800">
+                {queryExecuted ? 'Resultados da Consulta' : 'Sistemas Cadastrados'}
+              </h3>
+              <p className="text-sm text-gray-500 mt-1">
+                {queryExecuted 
+                  ? `${filteredSystems.length} sistema(s) encontrado(s) com os filtros aplicados`
+                  : 'Lista completa de todos os sistemas registrados no portal'
+                }
+              </p>
+            </div>
+            <button 
+              onClick={loadSystems}
+              className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 text-gray-700 rounded flex items-center"
+            >
+              <i className="ri-refresh-line mr-1"></i>
+              Atualizar
+            </button>
+          </div>
+        </div>
+        <div className="p-6">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-gray-500">Carregando sistemas...</div>
+            </div>
+          ) : systemsToDisplay.length === 0 ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="text-center">
+                <i className="ri-database-line text-4xl text-gray-300 mb-2"></i>
+                <p className="text-gray-500">
+                  {queryExecuted ? 'Nenhum sistema encontrado com os filtros aplicados' : 'Nenhum sistema cadastrado'}
+                </p>
+                <p className="text-sm text-gray-400">
+                  {queryExecuted ? 'Tente ajustar os filtros da consulta' : 'Cadastre um sistema na página de Gestão de Sistemas'}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome do Sistema</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>URL</TableHead>
+                  <TableHead>Hosting</TableHead>
+                  <TableHead>Responsável</TableHead>
+                  <TableHead>Data de Cadastro</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {systemsToDisplay.map((system) => (
+                  <TableRow key={system.id}>
+                    <TableCell className="font-medium">{system.name}</TableCell>
+                    <TableCell>{system.description || '-'}</TableCell>
+                    <TableCell>
+                      {system.url ? (
+                        <a 
+                          href={system.url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:text-primary-dark hover:underline"
+                        >
+                          {system.url}
+                        </a>
+                      ) : '-'}
+                    </TableCell>
+                    <TableCell>
+                      <span className="capitalize">{system.hosting || '-'}</span>
+                    </TableCell>
+                    <TableCell>{system.responsible || '-'}</TableCell>
+                    <TableCell>{new Date(system.created_at).toLocaleDateString('pt-BR')}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </div>
       </div>
     </div>
