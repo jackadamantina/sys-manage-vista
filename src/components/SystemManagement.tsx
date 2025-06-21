@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -625,29 +624,156 @@ const SystemManagement = () => {
                   )}
                 />
               </div>
+            </div>
+
+            {/* Logs e Auditoria */}
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Logs e Auditoria</h4>
               
-              <FormField
-                control={form.control}
-                name="logs_status"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Status dos Logs</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Status dos logs" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="enabled">Habilitado</SelectItem>
-                        <SelectItem value="disabled">Desabilitado</SelectItem>
-                        <SelectItem value="partial">Parcial</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="logs_status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status dos Logs</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Status dos logs" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="enabled">Habilitado</SelectItem>
+                          <SelectItem value="disabled">Desabilitado</SelectItem>
+                          <SelectItem value="partial">Parcial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="log_types"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Política de Retenção de Logs</FormLabel>
+                      <Select onValueChange={(value) => field.onChange({ retention_policy: value })} defaultValue={field.value?.retention_policy}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Política de retenção" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="30-days">30 dias</SelectItem>
+                          <SelectItem value="90-days">90 dias</SelectItem>
+                          <SelectItem value="180-days">180 dias</SelectItem>
+                          <SelectItem value="1-year">1 ano</SelectItem>
+                          <SelectItem value="2-years">2 anos</SelectItem>
+                          <SelectItem value="5-years">5 anos</SelectItem>
+                          <SelectItem value="indefinite">Indefinido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Tipos de Logs */}
+              <div className="space-y-3">
+                <FormLabel>Tipos de Logs Coletados</FormLabel>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                  {[
+                    { key: 'login_logs', label: 'Logs de Login' },
+                    { key: 'access_logs', label: 'Logs de Acesso' },
+                    { key: 'audit_logs', label: 'Logs de Auditoria' },
+                    { key: 'security_logs', label: 'Logs de Segurança' },
+                    { key: 'system_logs', label: 'Logs do Sistema' },
+                    { key: 'error_logs', label: 'Logs de Erro' }
+                  ].map((logType) => (
+                    <FormField
+                      key={logType.key}
+                      control={form.control}
+                      name="log_types"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                          <FormControl>
+                            <Checkbox
+                              checked={field.value?.[logType.key] || false}
+                              onCheckedChange={(checked) => {
+                                const currentValue = field.value || {};
+                                field.onChange({
+                                  ...currentValue,
+                                  [logType.key]: checked
+                                });
+                              }}
+                            />
+                          </FormControl>
+                          <div className="space-y-1 leading-none">
+                            <FormLabel className="text-sm font-normal">
+                              {logType.label}
+                            </FormLabel>
+                          </div>
+                        </FormItem>
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              {/* Configurações Adicionais de Logs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="log_types"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Formato dos Logs</FormLabel>
+                      <Select onValueChange={(value) => field.onChange({ ...field.value, log_format: value })} defaultValue={field.value?.log_format}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Formato dos logs" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="json">JSON</SelectItem>
+                          <SelectItem value="csv">CSV</SelectItem>
+                          <SelectItem value="txt">Texto</SelectItem>
+                          <SelectItem value="syslog">Syslog</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="log_types"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Frequência de Backup</FormLabel>
+                      <Select onValueChange={(value) => field.onChange({ ...field.value, backup_frequency: value })} defaultValue={field.value?.backup_frequency}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Frequência de backup" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="daily">Diário</SelectItem>
+                          <SelectItem value="weekly">Semanal</SelectItem>
+                          <SelectItem value="monthly">Mensal</SelectItem>
+                          <SelectItem value="quarterly">Trimestral</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
             </div>
 
             <div className="flex space-x-4">
