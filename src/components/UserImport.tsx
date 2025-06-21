@@ -32,16 +32,32 @@ const UserImport = () => {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
+  // Verificar autenticação atual
+  const checkAuth = async () => {
+    console.log('🔐 Verificando estado de autenticação...');
+    const { data: { session }, error } = await supabase.auth.getSession();
+    console.log('📋 Sessão atual:', session ? 'Ativa' : 'Inativa');
+    console.log('👤 Usuário na sessão:', session?.user?.id || 'Nenhum');
+    console.log('👤 Usuário no contexto:', user?.id || 'Nenhum');
+    
+    if (error) {
+      console.error('❌ Erro ao verificar sessão:', error);
+    }
+    
+    return session;
+  };
+
   // Carregar usuários importados
   const loadImportedUsers = async () => {
     try {
+      console.log('📥 Carregando usuários importados...');
       const { data, error } = await supabase
         .from('imported_users_idm')
         .select('*')
         .order('imported_at', { ascending: false });
 
       if (error) {
-        console.error('Erro ao carregar usuários importados:', error);
+        console.error('❌ Erro ao carregar usuários importados:', error);
         toast({
           title: "Erro",
           description: "Erro ao carregar usuários importados",
@@ -50,33 +66,37 @@ const UserImport = () => {
         return;
       }
 
+      console.log('✅ Usuários importados carregados:', data?.length || 0);
       setImportedUsers(data || []);
     } catch (error) {
-      console.error('Erro ao carregar usuários importados:', error);
+      console.error('💥 Erro inesperado ao carregar usuários importados:', error);
     }
   };
 
   const loadImportFiles = async () => {
     try {
+      console.log('📁 Carregando histórico de importações...');
       const { data, error } = await supabase
         .from('user_import_files_idm')
         .select('*')
         .order('import_date', { ascending: false });
 
       if (error) {
-        console.error('Erro ao carregar histórico de importações:', error);
+        console.error('❌ Erro ao carregar histórico de importações:', error);
         return;
       }
 
+      console.log('✅ Histórico de importações carregado:', data?.length || 0);
       setImportFiles(data || []);
     } catch (error) {
-      console.error('Erro ao carregar histórico de importações:', error);
+      console.error('💥 Erro inesperado ao carregar histórico:', error);
     }
   };
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      await checkAuth();
       await Promise.all([loadImportedUsers(), loadImportFiles()]);
       setLoading(false);
     };
@@ -165,11 +185,11 @@ const UserImport = () => {
 
   // Fazer upload e processar arquivo
   const handleFileUpload = async () => {
-    if (!selectedFile || !user) {
-      console.error('❌ Erro: arquivo não selecionado ou usuário não logado', { selectedFile, user });
+    if (!selectedFile) {
+      console.error('❌ Nenhum arquivo selecionado');
       toast({
         title: "Erro",
-        description: "Selecione um arquivo e certifique-se de estar logado",
+        description: "Selecione um arquivo para importar",
         variant: "destructive"
       });
       return;
@@ -177,7 +197,20 @@ const UserImport = () => {
 
     console.log('🚀 Iniciando processo de importação...');
     console.log('📁 Arquivo:', selectedFile.name, 'Tamanho:', selectedFile.size);
-    console.log('👤 Usuário logado:', user.id);
+    
+    // Verificar autenticação antes de prosseguir
+    const session = await checkAuth();
+    if (!session || !session.user) {
+      console.error('❌ Usuário não autenticado');
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para importar usuários",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    console.log('✅ Usuário autenticado:', session.user.id);
     
     setUploading(true);
     try {
@@ -199,12 +232,16 @@ const UserImport = () => {
       const importFileData = {
         file_name: selectedFile.name,
         file_size: selectedFile.size,
-        imported_by: user.id,
+        imported_by: session.user.id, // Usando o ID da sessão ativa
         total_records: users.length,
         processed_records: 0,
         status: 'processing'
       };
       console.log('📋 Dados do arquivo a serem inseridos:', importFileData);
+
+      // Verificar novamente a sessão antes da inserção
+      const currentSession = await supabase.auth.getSession();
+      console.log('🔍 Verificação final da sessão antes da inserção:', currentSession.data.session ? 'OK' : 'ERRO');
 
       const { data: fileData, error: fileError } = await supabase
         .from('user_import_files_idm')
@@ -214,9 +251,10 @@ const UserImport = () => {
 
       if (fileError) {
         console.error('❌ Erro ao registrar arquivo:', fileError);
-        console.error('Código do erro:', fileError.code);
-        console.error('Mensagem do erro:', fileError.message);
-        console.error('Detalhes do erro:', fileError.details);
+        console.error('📝 Código do erro:', fileError.code);
+        console.error('💬 Mensagem do erro:', fileError.message);
+        console.error('🔍 Detalhes do erro:', fileError.details);
+        console.error('💡 Dica do erro:', fileError.hint);
         throw new Error(`Erro ao registrar arquivo: ${fileError.message}`);
       }
 
@@ -236,9 +274,9 @@ const UserImport = () => {
 
       if (usersError) {
         console.error('❌ Erro ao inserir usuários:', usersError);
-        console.error('Código do erro:', usersError.code);
-        console.error('Mensagem do erro:', usersError.message);
-        console.error('Detalhes do erro:', usersError.details);
+        console.error('📝 Código do erro:', usersError.code);
+        console.error('💬 Mensagem do erro:', usersError.message);
+        console.error('🔍 Detalhes do erro:', usersError.details);
         throw new Error(`Erro ao inserir usuários: ${usersError.message}`);
       }
 
@@ -255,8 +293,8 @@ const UserImport = () => {
 
       if (updateError) {
         console.error('❌ Erro ao atualizar status do arquivo:', updateError);
-        console.error('Código do erro:', updateError.code);
-        console.error('Mensagem do erro:', updateError.message);
+        console.error('📝 Código do erro:', updateError.code);
+        console.error('💬 Mensagem do erro:', updateError.message);
         throw new Error(`Erro ao atualizar status: ${updateError.message}`);
       }
 
@@ -272,8 +310,8 @@ const UserImport = () => {
 
     } catch (error) {
       console.error('💥 ERRO DURANTE IMPORTAÇÃO:', error);
-      console.error('Tipo do erro:', typeof error);
-      console.error('Stack trace completo:', error instanceof Error ? error.stack : 'N/A');
+      console.error('🔍 Tipo do erro:', typeof error);
+      console.error('📚 Stack trace completo:', error instanceof Error ? error.stack : 'N/A');
       
       let errorMessage = 'Erro desconhecido';
       if (error instanceof Error) {
@@ -284,7 +322,7 @@ const UserImport = () => {
         errorMessage = JSON.stringify(error);
       }
       
-      console.error('Mensagem de erro final:', errorMessage);
+      console.error('💬 Mensagem de erro final:', errorMessage);
       
       toast({
         title: "Erro",
