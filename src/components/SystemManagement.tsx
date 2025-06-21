@@ -1,30 +1,80 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { useVersioning } from '@/hooks/useVersioning';
+import { 
+  Form, 
+  FormControl, 
+  FormField, 
+  FormItem, 
+  FormLabel, 
+  FormMessage 
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { useForm } from 'react-hook-form';
 
 interface System {
   id?: string;
   name: string;
   description: string;
   url: string;
+  hosting: string;
+  access_type: string;
+  responsible: string;
+  user_management_responsible: string;
+  password_complexity: string;
+  onboarding_type: string;
+  offboarding_type: string;
+  offboarding_priority: string;
+  named_users: boolean;
+  sso_configuration: string;
+  integration_type: string;
+  region_blocking: string;
+  mfa_configuration: string;
+  mfa_policy: string;
+  mfa_sms_policy: string;
+  logs_status: string;
+  log_types: any;
   created_at?: string;
 }
 
 const SystemManagement = () => {
   const { toast } = useToast();
   const { user } = useAuth();
-  const { updateVersion } = useVersioning();
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<System>({
-    name: '',
-    description: '',
-    url: ''
+  const form = useForm<System>({
+    defaultValues: {
+      name: '',
+      description: '',
+      url: '',
+      hosting: '',
+      access_type: '',
+      responsible: '',
+      user_management_responsible: '',
+      password_complexity: '',
+      onboarding_type: '',
+      offboarding_type: '',
+      offboarding_priority: '',
+      named_users: false,
+      sso_configuration: '',
+      integration_type: '',
+      region_blocking: '',
+      mfa_configuration: '',
+      mfa_policy: '',
+      mfa_sms_policy: '',
+      logs_status: '',
+      log_types: {}
+    }
   });
 
   const loadSystems = async () => {
@@ -62,9 +112,7 @@ const SystemManagement = () => {
     loadSystems();
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
+  const onSubmit = async (data: System) => {
     if (!user) {
       toast({
         title: "Erro",
@@ -78,11 +126,7 @@ const SystemManagement = () => {
       if (isEditing && editingId) {
         const { error } = await supabase
           .from('systems')
-          .update({
-            name: formData.name,
-            description: formData.description,
-            url: formData.url
-          })
+          .update(data)
           .eq('id', editingId);
 
         if (error) throw error;
@@ -95,9 +139,7 @@ const SystemManagement = () => {
         const { error } = await supabase
           .from('systems')
           .insert([{
-            name: formData.name,
-            description: formData.description,
-            url: formData.url,
+            ...data,
             user_id: user.id
           }]);
 
@@ -109,12 +151,8 @@ const SystemManagement = () => {
         });
       }
 
-      // Update version and reload systems
-      updateVersion();
       await loadSystems();
-      
-      // Reset form
-      setFormData({ name: '', description: '', url: '' });
+      form.reset();
       setIsEditing(false);
       setEditingId(null);
       
@@ -131,11 +169,7 @@ const SystemManagement = () => {
   const handleEdit = (system: System) => {
     setIsEditing(true);
     setEditingId(system.id!);
-    setFormData({
-      name: system.name,
-      description: system.description,
-      url: system.url
-    });
+    form.reset(system);
   };
 
   const handleDelete = async (id: string) => {
@@ -156,7 +190,6 @@ const SystemManagement = () => {
         description: "Sistema excluído com sucesso!",
       });
 
-      updateVersion();
       await loadSystems();
     } catch (error) {
       console.error('Erro ao excluir sistema:', error);
@@ -171,7 +204,7 @@ const SystemManagement = () => {
   const handleCancelEdit = () => {
     setIsEditing(false);
     setEditingId(null);
-    setFormData({ name: '', description: '', url: '' });
+    form.reset();
   };
 
   return (
@@ -185,58 +218,457 @@ const SystemManagement = () => {
         <h3 className="text-lg font-semibold text-gray-800 mb-4">
           {isEditing ? 'Editar Sistema' : 'Novo Sistema'}
         </h3>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">Nome do Sistema</label>
-              <input
-                type="text"
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                required
+        
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Informações Básicas */}
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Informações Básicas</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Nome do Sistema</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do sistema" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>URL</FormLabel>
+                      <FormControl>
+                        <Input placeholder="https://exemplo.com" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Descrição</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Descrição do sistema" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="hosting"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Hospedagem</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de hospedagem" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="cloud">Cloud</SelectItem>
+                          <SelectItem value="on-premise">On-Premise</SelectItem>
+                          <SelectItem value="hybrid">Híbrido</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="access_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Acesso</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione o tipo de acesso" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="public">Público</SelectItem>
+                          <SelectItem value="private">Privado</SelectItem>
+                          <SelectItem value="restricted">Restrito</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Responsabilidades */}
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Responsabilidades</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="responsible"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Responsável pelo Sistema</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do responsável" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="user_management_responsible"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Responsável pela Gestão de Usuários</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Nome do responsável" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Segurança e Autenticação */}
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Segurança e Autenticação</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="password_complexity"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Complexidade de Senha</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a complexidade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="low">Baixa</SelectItem>
+                          <SelectItem value="medium">Média</SelectItem>
+                          <SelectItem value="high">Alta</SelectItem>
+                          <SelectItem value="very-high">Muito Alta</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="sso_configuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Configuração SSO</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Configuração SSO" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="enabled">Habilitado</SelectItem>
+                          <SelectItem value="disabled">Desabilitado</SelectItem>
+                          <SelectItem value="pending">Pendente</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="mfa_configuration"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Configuração MFA</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="MFA" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="enabled">Habilitado</SelectItem>
+                          <SelectItem value="disabled">Desabilitado</SelectItem>
+                          <SelectItem value="optional">Opcional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="mfa_policy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Política MFA</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Política MFA" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="required">Obrigatório</SelectItem>
+                          <SelectItem value="optional">Opcional</SelectItem>
+                          <SelectItem value="conditional">Condicional</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="mfa_sms_policy"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Política MFA SMS</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="MFA SMS" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="enabled">Habilitado</SelectItem>
+                          <SelectItem value="disabled">Desabilitado</SelectItem>
+                          <SelectItem value="backup-only">Apenas Backup</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
+
+            {/* Gestão de Usuários */}
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Gestão de Usuários</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <FormField
+                  control={form.control}
+                  name="onboarding_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Onboarding</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Onboarding" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="automated">Automatizado</SelectItem>
+                          <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="semi-automated">Semi-automatizado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="offboarding_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Offboarding</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Offboarding" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="automated">Automatizado</SelectItem>
+                          <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="semi-automated">Semi-automatizado</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="offboarding_priority"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prioridade Offboarding</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Prioridade" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="high">Alta</SelectItem>
+                          <SelectItem value="medium">Média</SelectItem>
+                          <SelectItem value="low">Baixa</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="named_users"
+                render={({ field }) => (
+                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Usuários Nomeados</FormLabel>
+                      <div className="text-sm text-muted-foreground">
+                        Sistema utiliza usuários nomeados
+                      </div>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">URL</label>
-              <input
-                type="url"
-                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
-                value={formData.url}
-                onChange={(e) => setFormData({ ...formData, url: e.target.value })}
-                placeholder="https://exemplo.com"
+
+            {/* Integração e Configurações Avançadas */}
+            <div className="space-y-4">
+              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Integração e Configurações</h4>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="integration_type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Tipo de Integração</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Tipo de integração" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="api">API</SelectItem>
+                          <SelectItem value="ldap">LDAP</SelectItem>
+                          <SelectItem value="saml">SAML</SelectItem>
+                          <SelectItem value="oauth">OAuth</SelectItem>
+                          <SelectItem value="manual">Manual</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="region_blocking"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Bloqueio Regional</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Bloqueio regional" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="enabled">Habilitado</SelectItem>
+                          <SelectItem value="disabled">Desabilitado</SelectItem>
+                          <SelectItem value="partial">Parcial</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
+              <FormField
+                control={form.control}
+                name="logs_status"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Status dos Logs</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Status dos logs" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="enabled">Habilitado</SelectItem>
+                        <SelectItem value="disabled">Desabilitado</SelectItem>
+                        <SelectItem value="partial">Parcial</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Descrição</label>
-            <textarea
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
-              rows={3}
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            />
-          </div>
-          <div className="flex space-x-4">
-            <button
-              type="submit"
-              className="px-6 py-2 bg-primary text-white rounded-button flex items-center"
-            >
-              <i className="ri-save-line mr-2"></i>
-              {isEditing ? 'Atualizar' : 'Cadastrar'} Sistema
-            </button>
-            {isEditing && (
-              <button
-                type="button"
-                onClick={handleCancelEdit}
-                className="px-6 py-2 bg-gray-500 text-white rounded-button flex items-center"
-              >
-                <i className="ri-close-line mr-2"></i>
-                Cancelar
-              </button>
-            )}
-          </div>
-        </form>
+
+            <div className="flex space-x-4">
+              <Button type="submit" className="flex items-center">
+                <i className="ri-save-line mr-2"></i>
+                {isEditing ? 'Atualizar' : 'Cadastrar'} Sistema
+              </Button>
+              {isEditing && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={handleCancelEdit}
+                  className="flex items-center"
+                >
+                  <i className="ri-close-line mr-2"></i>
+                  Cancelar
+                </Button>
+              )}
+            </div>
+          </form>
+        </Form>
       </div>
 
       {/* Systems List */}
@@ -260,7 +692,10 @@ const SystemManagement = () => {
                     Sistema
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    URL
+                    URL/Hospedagem
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Segurança
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Criado em
@@ -277,16 +712,23 @@ const SystemManagement = () => {
                       <div>
                         <div className="text-sm font-medium text-gray-900">{system.name}</div>
                         <div className="text-sm text-gray-500">{system.description}</div>
+                        <div className="text-xs text-gray-400">Responsável: {system.responsible}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {system.url ? (
-                        <a href={system.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                      {system.url && (
+                        <a href={system.url} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline block">
                           {system.url}
                         </a>
-                      ) : (
-                        '-'
                       )}
+                      <div className="text-xs text-gray-400">Hospedagem: {system.hosting}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="space-y-1">
+                        <div className="text-xs">MFA: {system.mfa_configuration}</div>
+                        <div className="text-xs">SSO: {system.sso_configuration}</div>
+                        <div className="text-xs">Integração: {system.integration_type}</div>
+                      </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {system.created_at ? new Date(system.created_at).toLocaleDateString('pt-BR') : '-'}
