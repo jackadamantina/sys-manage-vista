@@ -1,5 +1,7 @@
 
 import React, { useState } from 'react';
+import { useVersioning } from '../hooks/useVersioning';
+import VersionInfoComponent from './VersionInfo';
 
 const Reports = () => {
   const [queryFilters, setQueryFilters] = useState({
@@ -11,8 +13,12 @@ const Reports = () => {
     sso: '',
     integration: '',
     logTypes: [],
-    retention: ''
+    retention: '',
+    versionFrom: '',
+    versionTo: ''
   });
+
+  const { currentVersion } = useVersioning();
 
   const handleFilterChange = (field: string, value: any) => {
     setQueryFilters(prev => ({
@@ -23,7 +29,8 @@ const Reports = () => {
 
   const executeQuery = () => {
     console.log('Executando query com filtros:', queryFilters);
-    // Aqui implementaria a lógica de query
+    console.log('Versão do sistema no momento da consulta:', currentVersion);
+    // Aqui implementaria a lógica de query incluindo versionamento
   };
 
   return (
@@ -36,16 +43,47 @@ const Reports = () => {
         </button>
       </div>
 
+      {/* Versão do Sistema para Relatórios */}
+      <VersionInfoComponent versionInfo={currentVersion} />
+
       {/* Query Builder */}
       <div className="bg-white rounded shadow p-6">
         <div className="flex items-center mb-6">
           <h3 className="text-lg font-semibold text-gray-800">Construtor de Consultas</h3>
-          <div className="w-4 h-4 ml-2 text-gray-400 cursor-help flex items-center justify-center" title="Use os filtros abaixo para criar consultas personalizadas">
+          <div className="w-4 h-4 ml-2 text-gray-400 cursor-help flex items-center justify-center" title="Use os filtros abaixo para criar consultas personalizadas com versionamento">
             <i className="ri-question-line"></i>
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          {/* Filtros de Versionamento */}
+          <div className="md:col-span-3">
+            <h4 className="text-md font-medium text-gray-900 mb-4">Filtros de Versionamento</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Versão A Partir De</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                  placeholder="Ex: 1.0.0"
+                  value={queryFilters.versionFrom}
+                  onChange={(e) => handleFilterChange('versionFrom', e.target.value)}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Versão Até</label>
+                <input
+                  type="text"
+                  className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                  placeholder="Ex: 2.0.0"
+                  value={queryFilters.versionTo}
+                  onChange={(e) => handleFilterChange('versionTo', e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Filtros Existentes */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Sistema</label>
             <input
@@ -149,6 +187,7 @@ const Reports = () => {
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-800">Relatório de Sistemas</h3>
               <p className="text-sm text-gray-500">Visão geral dos sistemas cadastrados</p>
+              <p className="text-xs text-gray-400">Versão: {currentVersion.version}</p>
             </div>
           </div>
           <button className="w-full px-4 py-2 text-primary border border-primary rounded-button hover:bg-primary hover:text-white transition-colors">
@@ -165,6 +204,7 @@ const Reports = () => {
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-800">Relatório de Usuários</h3>
               <p className="text-sm text-gray-500">Estatísticas de usuários ativos</p>
+              <p className="text-xs text-gray-400">Versão: {currentVersion.version}</p>
             </div>
           </div>
           <button className="w-full px-4 py-2 text-primary border border-primary rounded-button hover:bg-primary hover:text-white transition-colors">
@@ -181,6 +221,7 @@ const Reports = () => {
             <div className="ml-4">
               <h3 className="text-lg font-semibold text-gray-800">Relatório de Segurança</h3>
               <p className="text-sm text-gray-500">Status de segurança dos sistemas</p>
+              <p className="text-xs text-gray-400">Versão: {currentVersion.version}</p>
             </div>
           </div>
           <button className="w-full px-4 py-2 text-primary border border-primary rounded-button hover:bg-primary hover:text-white transition-colors">

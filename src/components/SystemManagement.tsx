@@ -1,7 +1,10 @@
 import React, { useState } from 'react';
+import { useVersioning } from '../hooks/useVersioning';
+import VersionInfoComponent from './VersionInfo';
 
 const SystemManagement = () => {
   const [activeTab, setActiveTab] = useState('general');
+  const { currentVersion, updateVersion } = useVersioning();
 
   const tabs = [
     { id: 'general', label: 'Gestão Geral' },
@@ -10,15 +13,33 @@ const SystemManagement = () => {
     { id: 'logs', label: 'Logs' },
   ];
 
+  const handleSave = () => {
+    const newVersion = updateVersion();
+    console.log('Sistema salvo com nova versão:', newVersion);
+    // Aqui seria implementada a lógica de salvamento real
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold text-gray-800">Gestão de Sistemas</h2>
-        <button className="px-4 py-2 bg-primary text-white rounded-button flex items-center">
-          <i className="ri-add-line mr-2"></i>
-          Novo Sistema
-        </button>
+        <div className="flex space-x-3">
+          <button 
+            onClick={handleSave}
+            className="px-4 py-2 bg-green-500 text-white rounded-button flex items-center"
+          >
+            <i className="ri-save-line mr-2"></i>
+            Salvar Alterações
+          </button>
+          <button className="px-4 py-2 bg-primary text-white rounded-button flex items-center">
+            <i className="ri-add-line mr-2"></i>
+            Novo Sistema
+          </button>
+        </div>
       </div>
+
+      {/* Informações de Versão */}
+      <VersionInfoComponent versionInfo={currentVersion} showDetailed={true} />
 
       <div className="bg-white rounded shadow">
         <div className="p-6 border-b border-gray-200">
@@ -38,17 +59,17 @@ const SystemManagement = () => {
         </div>
 
         <div className="p-6">
-          {activeTab === 'general' && <GeneralTab />}
-          {activeTab === 'access' && <AccessTab />}
-          {activeTab === 'security' && <SecurityTab />}
-          {activeTab === 'logs' && <LogsTab />}
+          {activeTab === 'general' && <GeneralTab onSave={handleSave} />}
+          {activeTab === 'access' && <AccessTab onSave={handleSave} />}
+          {activeTab === 'security' && <SecurityTab onSave={handleSave} />}
+          {activeTab === 'logs' && <LogsTab onSave={handleSave} />}
         </div>
       </div>
     </div>
   );
 };
 
-const GeneralTab = () => (
+const GeneralTab = ({ onSave }: { onSave: () => void }) => (
   <form className="space-y-6">
     <div className="flex justify-between items-center mb-6">
       <h3 className="text-lg font-medium text-gray-900">Informações Básicas</h3>
@@ -119,10 +140,21 @@ const GeneralTab = () => (
         </div>
       </div>
     </div>
+
+    <div className="flex justify-end">
+      <button 
+        type="button" 
+        onClick={onSave}
+        className="px-6 py-2 bg-primary text-white rounded-button flex items-center"
+      >
+        <i className="ri-save-line mr-2"></i>
+        Salvar
+      </button>
+    </div>
   </form>
 );
 
-const AccessTab = () => (
+const AccessTab = ({ onSave }: { onSave: () => void }) => (
   <form className="space-y-6">
     <div className="flex justify-between items-center mb-6">
       <div className="flex items-center">
@@ -215,10 +247,21 @@ const AccessTab = () => (
         </div>
       </div>
     </div>
+
+    <div className="flex justify-end">
+      <button 
+        type="button" 
+        onClick={onSave}
+        className="px-6 py-2 bg-primary text-white rounded-button flex items-center"
+      >
+        <i className="ri-save-line mr-2"></i>
+        Salvar
+      </button>
+    </div>
   </form>
 );
 
-const SecurityTab = () => (
+const SecurityTab = ({ onSave }: { onSave: () => void }) => (
   <form className="space-y-6">
     <div className="flex justify-between items-center mb-6">
       <h3 className="text-lg font-medium text-gray-900">Configurações de Segurança</h3>
@@ -226,7 +269,11 @@ const SecurityTab = () => (
         <button type="button" className="flex items-center text-primary hover:text-primary-dark text-sm">
           <i className="ri-add-line mr-1"></i> Adicionar Campo de Segurança
         </button>
-        <button type="button" className="px-4 py-2 bg-primary text-white rounded-button flex items-center">
+        <button 
+          type="button" 
+          onClick={onSave}
+          className="px-4 py-2 bg-primary text-white rounded-button flex items-center"
+        >
           <i className="ri-save-line mr-2"></i> Salvar
         </button>
       </div>
@@ -305,11 +352,15 @@ const SecurityTab = () => (
   </form>
 );
 
-const LogsTab = () => (
+const LogsTab = ({ onSave }: { onSave: () => void }) => (
   <form className="space-y-6">
     <div className="flex justify-between items-center mb-6">
       <h3 className="text-lg font-medium text-gray-900">Configurações de Logs</h3>
-      <button type="button" className="px-4 py-2 bg-primary text-white rounded-button flex items-center">
+      <button 
+        type="button" 
+        onClick={onSave}
+        className="px-4 py-2 bg-primary text-white rounded-button flex items-center"
+      >
         <i className="ri-save-line mr-2"></i> Salvar
       </button>
     </div>
