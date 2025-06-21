@@ -52,7 +52,7 @@ const Logo = ({ size = 'md', className = '' }: LogoProps) => {
           IDM-Experience
         </div>
         <div className="text-xs text-gray-500 font-medium">
-          Identity Management and Systems
+          Gerenciamento de usuários e sistemas
         </div>
       </div>
     </div>
