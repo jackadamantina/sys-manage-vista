@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/integrations/supabase/client';
@@ -42,7 +41,13 @@ const UserManagement = () => {
         return;
       }
 
-      setUsers(data || []);
+      // Type assertion to ensure role matches UserRole type
+      const typedUsers = (data || []).map(user => ({
+        ...user,
+        role: user.role as UserRole
+      }));
+
+      setUsers(typedUsers);
     } catch (error) {
       console.error('Erro ao buscar usuários:', error);
       toast.error('Erro ao carregar usuários');
