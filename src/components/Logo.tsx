@@ -18,7 +18,7 @@ const Logo = ({ size = 'md', className = '' }: LogoProps) => {
       <div className="relative">
         {/* Logo Icon - Stylized shield/lock representing Identity Management */}
         <svg 
-          className={`${sizeClasses[size]} text-primary`}
+          className={`${sizeClasses[size]}`}
           viewBox="0 0 40 40" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"
@@ -26,7 +26,7 @@ const Logo = ({ size = 'md', className = '' }: LogoProps) => {
           {/* Shield background */}
           <path
             d="M20 2L32 8V18C32 26.5 26.5 34 20 38C13.5 34 8 26.5 8 18V8L20 2Z"
-            fill="currentColor"
+            fill="#c505f2"
             className="opacity-90"
           />
           {/* Inner circle representing user/identity */}
@@ -52,7 +52,7 @@ const Logo = ({ size = 'md', className = '' }: LogoProps) => {
           IDM-Experience
         </div>
         <div className="text-xs text-gray-500 font-medium">
-          Identity Management
+          Identity Management and Systems
         </div>
       </div>
     </div>
