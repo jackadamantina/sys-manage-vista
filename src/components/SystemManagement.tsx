@@ -342,7 +342,7 @@ const SystemManagement = () => {
 
                     <div>
                       <div className="flex items-center mb-2">
-                        <label className="block text-sm font-medium text-gray-700">SSO Disponível</label>
+                        <label className="block text-sm font-medium text-gray-700">Configuração de SSO</label>
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
@@ -350,62 +350,16 @@ const SystemManagement = () => {
                             </div>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>Status da disponibilidade de Single Sign-On</p>
+                            <p>Status da configuração de Single Sign-On</p>
                           </TooltipContent>
                         </Tooltip>
                       </div>
                       <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
                         <option value="">Selecione o status</option>
-                        <option value="available">Disponível</option>
-                        <option value="not-available">Não Disponível</option>
-                        <option value="in-development">A Desenvolver</option>
-                        <option value="license-upgrade">Upgrade de Licença</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-6">
-                    <div>
-                      <div className="flex items-center mb-2">
-                        <label className="block text-sm font-medium text-gray-700">Bloqueio por Região</label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
-                              <i className="ri-question-line"></i>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Define se o sistema bloqueia acessos por região geográfica</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
-                        <option value="">Selecione o status</option>
-                        <option value="applied">Aplicado</option>
-                        <option value="not-applied">Não Aplicado</option>
-                        <option value="not-available">Não Disponível</option>
-                      </select>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center mb-2">
-                        <label className="block text-sm font-medium text-gray-700">MFA Aplicado</label>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
-                              <i className="ri-question-line"></i>
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            <p>Define se o sistema utiliza autenticação multifator (MFA)</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </div>
-                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
-                        <option value="">Selecione o status</option>
-                        <option value="applied">Aplicado</option>
-                        <option value="not-applied">Não Aplicado</option>
-                        <option value="not-available">Não Disponível</option>
+                        <option value="desenvolver">Desenvolver</option>
+                        <option value="aplicado">Aplicado</option>
+                        <option value="nao-aplicado">Não Aplicado</option>
+                        <option value="upgrade-licenca">Upgrade de Licença</option>
                       </select>
                     </div>
                   </div>
@@ -441,6 +395,97 @@ const SystemManagement = () => {
                           <span className="text-xs text-gray-500">Acesso sem autenticação</span>
                         </div>
                       </label>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <div className="flex items-center mb-2">
+                        <label className="block text-sm font-medium text-gray-700">Bloqueio por Região</label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
+                              <i className="ri-question-line"></i>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Define se o sistema bloqueia acessos por região geográfica</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Selecione o status</option>
+                        <option value="applied">Aplicado</option>
+                        <option value="not-applied">Não Aplicado</option>
+                        <option value="not-available">Não Disponível</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center mb-2">
+                        <label className="block text-sm font-medium text-gray-700">Configuração de MFA</label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
+                              <i className="ri-question-line"></i>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Define se o sistema utiliza autenticação multifator (MFA)</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Selecione o status</option>
+                        <option value="applied">Aplicado</option>
+                        <option value="not-applied">Não Aplicado</option>
+                        <option value="not-available">Não Disponível</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <div className="flex items-center mb-2">
+                        <label className="block text-sm font-medium text-gray-700">Política de MFA</label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
+                              <i className="ri-question-line"></i>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Define a política de autenticação multifator</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Selecione a política</option>
+                        <option value="habilitado">Habilitado</option>
+                        <option value="sem-possibilidade">Sem possibilidade</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center mb-2">
+                        <label className="block text-sm font-medium text-gray-700">Política de MFA por SMS</label>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
+                              <i className="ri-question-line"></i>
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Define a política de MFA via SMS</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </div>
+                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                        <option value="">Selecione a política</option>
+                        <option value="habilitado">Habilitado</option>
+                        <option value="nao-habilitado">Não habilitado</option>
+                        <option value="nao-possui-opcao">Não possui opção</option>
+                      </select>
                     </div>
                   </div>
                 </div>
