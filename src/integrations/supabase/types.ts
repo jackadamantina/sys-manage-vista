@@ -135,6 +135,98 @@ export type Database = {
         }
         Relationships: []
       }
+      systems: {
+        Row: {
+          access_type: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          hosting: string | null
+          id: string
+          integration_type: string | null
+          log_types: Json | null
+          logs_status: string | null
+          mfa_configuration: string | null
+          mfa_policy: string | null
+          mfa_sms_policy: string | null
+          name: string
+          named_users: boolean | null
+          offboarding_priority: string | null
+          offboarding_type: string | null
+          onboarding_type: string | null
+          password_complexity: string | null
+          region_blocking: string | null
+          responsible: string | null
+          sso_configuration: string | null
+          updated_at: string
+          url: string | null
+          user_management_responsible: string | null
+          version: string | null
+        }
+        Insert: {
+          access_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hosting?: string | null
+          id?: string
+          integration_type?: string | null
+          log_types?: Json | null
+          logs_status?: string | null
+          mfa_configuration?: string | null
+          mfa_policy?: string | null
+          mfa_sms_policy?: string | null
+          name: string
+          named_users?: boolean | null
+          offboarding_priority?: string | null
+          offboarding_type?: string | null
+          onboarding_type?: string | null
+          password_complexity?: string | null
+          region_blocking?: string | null
+          responsible?: string | null
+          sso_configuration?: string | null
+          updated_at?: string
+          url?: string | null
+          user_management_responsible?: string | null
+          version?: string | null
+        }
+        Update: {
+          access_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          hosting?: string | null
+          id?: string
+          integration_type?: string | null
+          log_types?: Json | null
+          logs_status?: string | null
+          mfa_configuration?: string | null
+          mfa_policy?: string | null
+          mfa_sms_policy?: string | null
+          name?: string
+          named_users?: boolean | null
+          offboarding_priority?: string | null
+          offboarding_type?: string | null
+          onboarding_type?: string | null
+          password_complexity?: string | null
+          region_blocking?: string | null
+          responsible?: string | null
+          sso_configuration?: string | null
+          updated_at?: string
+          url?: string | null
+          user_management_responsible?: string | null
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "systems_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_idm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_idm: {
         Row: {
           created_at: string

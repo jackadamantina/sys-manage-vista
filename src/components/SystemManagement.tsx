@@ -1,20 +1,138 @@
+
 import React, { useState, useEffect } from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import VersionInfoComponent from './VersionInfo';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/contexts/AuthContext';
+import { useToast } from '@/hooks/use-toast';
 
 const SystemManagement = () => {
   const { currentVersion, updateVersion } = useVersioning();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    url: '',
+    hosting: '',
+    access_type: '',
+    responsible: '',
+    user_management_responsible: '',
+    password_complexity: '',
+    onboarding_type: '',
+    offboarding_type: '',
+    offboarding_priority: '',
+    named_users: null as boolean | null,
+    sso_configuration: '',
+    integration_type: '',
+    region_blocking: '',
+    mfa_configuration: '',
+    mfa_policy: '',
+    mfa_sms_policy: '',
+    logs_status: '',
+    log_types: {} as any
+  });
+
   const [logsStatus, setLogsStatus] = useState('');
 
-  const handleSave = () => {
-    const newVersion = updateVersion();
-    console.log('Sistema salvo com nova versão:', newVersion);
-    // Aqui seria implementada a lógica de salvamento real
+  const handleInputChange = (field: string, value: any) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!user) {
+        toast({
+          title: "Erro",
+          description: "Usuário não autenticado",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      if (!formData.name.trim()) {
+        toast({
+          title: "Erro",
+          description: "Nome do sistema é obrigatório",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      const newVersion = updateVersion();
+      
+      const systemData = {
+        ...formData,
+        version: newVersion.version,
+        created_by: user.user_id
+      };
+
+      const { data, error } = await supabase
+        .from('systems')
+        .insert([systemData])
+        .select();
+
+      if (error) {
+        console.error('Erro ao salvar sistema:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao salvar o sistema",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      console.log('Sistema salvo com sucesso:', data);
+      toast({
+        title: "Sucesso",
+        description: "Sistema salvo com sucesso!",
+        variant: "default"
+      });
+
+      // Limpar formulário após salvar
+      setFormData({
+        name: '',
+        description: '',
+        url: '',
+        hosting: '',
+        access_type: '',
+        responsible: '',
+        user_management_responsible: '',
+        password_complexity: '',
+        onboarding_type: '',
+        offboarding_type: '',
+        offboarding_priority: '',
+        named_users: null,
+        sso_configuration: '',
+        integration_type: '',
+        region_blocking: '',
+        mfa_configuration: '',
+        mfa_policy: '',
+        mfa_sms_policy: '',
+        logs_status: '',
+        log_types: {}
+      });
+      setLogsStatus('');
+
+    } catch (error) {
+      console.error('Erro ao salvar sistema:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao salvar o sistema",
+        variant: "destructive"
+      });
+    }
   };
 
   const handleLogsStatusChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLogsStatus(e.target.value);
+    const value = e.target.value;
+    setLogsStatus(value);
+    handleInputChange('logs_status', value);
   };
 
   return (
@@ -70,6 +188,8 @@ const SystemManagement = () => {
                     type="text"
                     className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
                     placeholder="Digite o nome do sistema"
+                    value={formData.name}
+                    onChange={(e) => handleInputChange('name', e.target.value)}
                   />
                 </div>
 
@@ -79,6 +199,8 @@ const SystemManagement = () => {
                     className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
                     rows={4}
                     placeholder="Descreva o sistema"
+                    value={formData.description}
+                    onChange={(e) => handleInputChange('description', e.target.value)}
                   />
                 </div>
 
@@ -88,6 +210,8 @@ const SystemManagement = () => {
                     type="url"
                     className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
                     placeholder="https://"
+                    value={formData.url}
+                    onChange={(e) => handleInputChange('url', e.target.value)}
                   />
                 </div>
 
@@ -106,7 +230,11 @@ const SystemManagement = () => {
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                    <select 
+                      className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                      value={formData.hosting}
+                      onChange={(e) => handleInputChange('hosting', e.target.value)}
+                    >
                       <option value="">Selecione o hosting</option>
                       <option value="on-premises">On-premises</option>
                       <option value="cloud">Cloud</option>
@@ -128,7 +256,11 @@ const SystemManagement = () => {
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                    <select 
+                      className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                      value={formData.access_type}
+                      onChange={(e) => handleInputChange('access_type', e.target.value)}
+                    >
                       <option value="">Selecione o acesso</option>
                       <option value="interno">Interno</option>
                       <option value="externo">Externo</option>
@@ -179,6 +311,8 @@ const SystemManagement = () => {
                       type="text"
                       className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
                       placeholder="Nome do responsável pelo sistema"
+                      value={formData.responsible}
+                      onChange={(e) => handleInputChange('responsible', e.target.value)}
                     />
                   </div>
 
@@ -200,6 +334,8 @@ const SystemManagement = () => {
                       type="text"
                       className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
                       placeholder="Nome do responsável pela gestão de usuários"
+                      value={formData.user_management_responsible}
+                      onChange={(e) => handleInputChange('user_management_responsible', e.target.value)}
                     />
                   </div>
 
@@ -217,7 +353,11 @@ const SystemManagement = () => {
                         </TooltipContent>
                       </Tooltip>
                     </div>
-                    <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                    <select 
+                      className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                      value={formData.password_complexity}
+                      onChange={(e) => handleInputChange('password_complexity', e.target.value)}
+                    >
                       <option value="">Selecione</option>
                       <option value="applied">Aplicado</option>
                       <option value="not-applied">Não Aplicado</option>
@@ -241,7 +381,11 @@ const SystemManagement = () => {
                           </TooltipContent>
                         </Tooltip>
                       </div>
-                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                      <select 
+                        className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                        value={formData.onboarding_type}
+                        onChange={(e) => handleInputChange('onboarding_type', e.target.value)}
+                      >
                         <option value="">Selecione o tipo</option>
                         <option value="automatic">Automático</option>
                         <option value="manual">Manual</option>
@@ -267,7 +411,11 @@ const SystemManagement = () => {
                             </TooltipContent>
                           </Tooltip>
                         </div>
-                        <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                        <select 
+                          className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                          value={formData.offboarding_type}
+                          onChange={(e) => handleInputChange('offboarding_type', e.target.value)}
+                        >
                           <option value="">Selecione o tipo</option>
                           <option value="automatic">Automático</option>
                           <option value="manual">Manual</option>
@@ -289,7 +437,11 @@ const SystemManagement = () => {
                             </TooltipContent>
                           </Tooltip>
                         </div>
-                        <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                        <select 
+                          className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                          value={formData.offboarding_priority}
+                          onChange={(e) => handleInputChange('offboarding_priority', e.target.value)}
+                        >
                           <option value="">Selecione a prioridade</option>
                           <option value="high">Alta</option>
                           <option value="medium">Média</option>
@@ -330,11 +482,25 @@ const SystemManagement = () => {
                       </div>
                       <div className="flex space-x-4">
                         <label className="flex items-center">
-                          <input type="radio" name="named_users" value="yes" className="mr-2" />
+                          <input 
+                            type="radio" 
+                            name="named_users" 
+                            value="yes" 
+                            className="mr-2"
+                            checked={formData.named_users === true}
+                            onChange={() => handleInputChange('named_users', true)}
+                          />
                           <span className="text-sm text-gray-700">Sim</span>
                         </label>
                         <label className="flex items-center">
-                          <input type="radio" name="named_users" value="no" className="mr-2" />
+                          <input 
+                            type="radio" 
+                            name="named_users" 
+                            value="no" 
+                            className="mr-2"
+                            checked={formData.named_users === false}
+                            onChange={() => handleInputChange('named_users', false)}
+                          />
                           <span className="text-sm text-gray-700">Não</span>
                         </label>
                       </div>
@@ -354,7 +520,11 @@ const SystemManagement = () => {
                           </TooltipContent>
                         </Tooltip>
                       </div>
-                      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                      <select 
+                        className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                        value={formData.sso_configuration}
+                        onChange={(e) => handleInputChange('sso_configuration', e.target.value)}
+                      >
                         <option value="">Selecione o status</option>
                         <option value="desenvolver">Desenvolver</option>
                         <option value="aplicado">Aplicado</option>
@@ -368,28 +538,56 @@ const SystemManagement = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-2">Integração</label>
                     <div className="grid grid-cols-2 gap-4">
                       <label className="flex items-center p-4 border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="integration" value="sso" className="mr-3" />
+                        <input 
+                          type="radio" 
+                          name="integration" 
+                          value="sso" 
+                          className="mr-3"
+                          checked={formData.integration_type === 'sso'}
+                          onChange={() => handleInputChange('integration_type', 'sso')}
+                        />
                         <div>
                           <span className="block text-sm font-medium text-gray-700">SSO</span>
                           <span className="text-xs text-gray-500">Single Sign-On</span>
                         </div>
                       </label>
                       <label className="flex items-center p-4 border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="integration" value="internal" className="mr-3" />
+                        <input 
+                          type="radio" 
+                          name="integration" 
+                          value="internal" 
+                          className="mr-3"
+                          checked={formData.integration_type === 'internal'}
+                          onChange={() => handleInputChange('integration_type', 'internal')}
+                        />
                         <div>
                           <span className="block text-sm font-medium text-gray-700">Internos</span>
                           <span className="text-xs text-gray-500">Usuários internos do sistema</span>
                         </div>
                       </label>
                       <label className="flex items-center p-4 border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="integration" value="single" className="mr-3" />
+                        <input 
+                          type="radio" 
+                          name="integration" 
+                          value="single" 
+                          className="mr-3"
+                          checked={formData.integration_type === 'single'}
+                          onChange={() => handleInputChange('integration_type', 'single')}
+                        />
                         <div>
                           <span className="block text-sm font-medium text-gray-700">Usuário Único</span>
                           <span className="text-xs text-gray-500">Acesso compartilhado</span>
                         </div>
                       </label>
                       <label className="flex items-center p-4 border border-gray-300 rounded cursor-pointer hover:bg-gray-50">
-                        <input type="radio" name="integration" value="none" className="mr-3" />
+                        <input 
+                          type="radio" 
+                          name="integration" 
+                          value="none" 
+                          className="mr-3"
+                          checked={formData.integration_type === 'none'}
+                          onChange={() => handleInputChange('integration_type', 'none')}
+                        />
                         <div>
                           <span className="block text-sm font-medium text-gray-700">Sem Usuários</span>
                           <span className="text-xs text-gray-500">Acesso sem autenticação</span>
@@ -519,6 +717,7 @@ const SystemManagement = () => {
                           name="logs_status" 
                           value="enabled" 
                           className="mr-2"
+                          checked={logsStatus === 'enabled'}
                           onChange={handleLogsStatusChange}
                         />
                         <span className="text-sm text-gray-700">Logs ativados</span>
@@ -529,6 +728,7 @@ const SystemManagement = () => {
                           name="logs_status" 
                           value="disabled" 
                           className="mr-2"
+                          checked={logsStatus === 'disabled'}
                           onChange={handleLogsStatusChange}
                         />
                         <span className="text-sm text-gray-700">Logs inexistentes</span>
