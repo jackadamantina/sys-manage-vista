@@ -1,11 +1,56 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import React, { useState } from 'react';
+import Sidebar from '../components/Sidebar';
+import Header from '../components/Header';
+import Dashboard from '../components/Dashboard';
+import SystemManagement from '../components/SystemManagement';
+import Settings from '../components/Settings';
+import Reports from '../components/Reports';
+import UserManagement from '../components/UserManagement';
+
+type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'settings';
 
 const Index = () => {
+  const [activePage, setActivePage] = useState<ActivePage>('dashboard');
+
+  const renderContent = () => {
+    switch (activePage) {
+      case 'system-management':
+        return <SystemManagement />;
+      case 'reports':
+        return <Reports />;
+      case 'user-management':
+        return <UserManagement />;
+      case 'settings':
+        return <Settings />;
+      default:
+        return <Dashboard />;
+    }
+  };
+
+  const getPageTitle = () => {
+    switch (activePage) {
+      case 'system-management':
+        return 'Gestão de Sistemas';
+      case 'reports':
+        return 'Relatórios';
+      case 'user-management':
+        return 'Gestão de Usuários';
+      case 'settings':
+        return 'Configurações';
+      default:
+        return 'Dashboard';
+    }
+  };
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
+    <div className="flex min-h-screen bg-gray-50">
+      <Sidebar activePage={activePage} onPageChange={setActivePage} />
+      <div className="flex-1 flex flex-col">
+        <Header title={getPageTitle()} />
+        <main className="flex-1 overflow-y-auto p-6">
+          {renderContent()}
+        </main>
       </div>
     </div>
   );
