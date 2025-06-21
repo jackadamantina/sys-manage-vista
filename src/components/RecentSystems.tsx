@@ -14,6 +14,7 @@ interface System {
 const RecentSystems = () => {
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchRecentSystems();
@@ -21,20 +22,28 @@ const RecentSystems = () => {
 
   const fetchRecentSystems = async () => {
     try {
+      console.log('Iniciando busca de sistemas recentes...');
+      setError(null);
+      
       const { data, error } = await supabase
         .from('systems_idm')
         .select('id, name, url, responsible, created_at, updated_at')
         .order('created_at', { ascending: false })
         .limit(5);
 
+      console.log('Resposta da query systems_idm:', { data, error });
+
       if (error) {
         console.error('Erro ao buscar sistemas recentes:', error);
+        setError(`Erro na consulta: ${error.message}`);
         return;
       }
 
+      console.log('Sistemas carregados com sucesso:', data?.length || 0);
       setSystems(data || []);
     } catch (error) {
-      console.error('Erro ao buscar sistemas recentes:', error);
+      console.error('Erro inesperado ao buscar sistemas recentes:', error);
+      setError('Erro inesperado ao carregar sistemas');
     } finally {
       setLoading(false);
     }
@@ -79,12 +88,40 @@ const RecentSystems = () => {
     );
   }
 
+  if (error) {
+    return (
+      <div className="bg-white rounded shadow">
+        <div className="p-5 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800">Sistemas Recentes</h3>
+        </div>
+        <div className="p-5">
+          <div className="text-center text-red-500 py-4">
+            <i className="ri-error-warning-line text-2xl mb-2"></i>
+            <p className="font-medium">Erro ao carregar sistemas</p>
+            <p className="text-sm text-gray-500 mt-1">{error}</p>
+            <button 
+              onClick={fetchRecentSystems}
+              className="mt-3 px-4 py-2 bg-primary text-white text-sm rounded hover:bg-primary-dark transition-colors"
+            >
+              Tentar novamente
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white rounded shadow">
       <div className="p-5 border-b border-gray-200">
         <div className="flex justify-between items-center">
           <h3 className="text-lg font-semibold text-gray-800">Sistemas Recentes</h3>
-          <button className="text-sm text-primary hover:text-primary-dark">Ver todos</button>
+          <button 
+            onClick={fetchRecentSystems}
+            className="text-sm text-primary hover:text-primary-dark"
+          >
+            Atualizar
+          </button>
         </div>
       </div>
       <div className="overflow-x-auto">
@@ -159,6 +196,9 @@ const RecentSystems = () => {
         <div className="p-5 text-center text-gray-500">
           <i className="ri-database-line text-3xl mb-2"></i>
           <p>Nenhum sistema encontrado</p>
+          <p className="text-sm text-gray-400 mt-1">
+            Cadastre um sistema na página de Gestão de Sistemas
+          </p>
         </div>
       )}
     </div>

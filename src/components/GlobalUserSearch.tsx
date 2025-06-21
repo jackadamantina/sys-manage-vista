@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -30,6 +29,7 @@ const GlobalUserSearch = () => {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // Mock data para demonstração - dados dos usuários por sistema
   const systemUsersData = [
@@ -69,19 +69,26 @@ const GlobalUserSearch = () => {
 
   const loadSystems = async () => {
     try {
+      console.log('Carregando sistemas para busca global...');
+      setError(null);
+      
       const { data, error } = await supabase
         .from('systems_idm')
         .select('id, name, description, url')
         .order('name', { ascending: true });
 
+      console.log('Sistemas carregados para busca:', { data, error });
+
       if (error) {
         console.error('Erro ao carregar sistemas:', error);
+        setError(`Erro ao carregar sistemas: ${error.message}`);
         return;
       }
 
       setSystems(data || []);
     } catch (error) {
       console.error('Erro ao carregar sistemas:', error);
+      setError('Erro inesperado ao carregar sistemas');
     }
   };
 
@@ -180,6 +187,30 @@ const GlobalUserSearch = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-800">Busca Global de Usuários</h2>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <i className="ri-error-warning-line text-red-400"></i>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                Erro ao carregar dados
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+                <button 
+                  onClick={loadSystems}
+                  className="mt-2 text-sm text-red-600 hover:text-red-500 underline"
+                >
+                  Tentar carregar novamente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Campo de Busca */}
       <div className="bg-white rounded shadow p-6">

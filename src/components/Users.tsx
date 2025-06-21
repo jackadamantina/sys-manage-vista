@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -39,6 +38,7 @@ const Users = () => {
   const [loading, setLoading] = useState(true);
   const [comparisonFile, setComparisonFile] = useState<File | null>(null);
   const [showComparison, setShowComparison] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   
   // Mock data for demonstration - in real implementation, this would come from file parsing
   const systemUsersData: SystemUserData[] = [
@@ -69,17 +69,23 @@ const Users = () => {
   // Load systems from Supabase
   const loadSystems = async () => {
     try {
+      console.log('Carregando sistemas para usuários...');
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('systems_idm')
         .select('id, name, description, url, created_at')
         .order('created_at', { ascending: false });
 
+      console.log('Sistemas carregados para usuários:', { data, error });
+
       if (error) {
         console.error('Erro ao carregar sistemas:', error);
+        setError(`Erro ao carregar sistemas: ${error.message}`);
         toast({
           title: "Erro",
-          description: "Erro ao carregar sistemas",
+          description: `Erro ao carregar sistemas: ${error.message}`,
           variant: "destructive"
         });
         return;
@@ -88,9 +94,11 @@ const Users = () => {
       setSystems(data || []);
     } catch (error) {
       console.error('Erro ao carregar sistemas:', error);
+      const errorMessage = 'Erro inesperado ao carregar sistemas';
+      setError(errorMessage);
       toast({
         title: "Erro",
-        description: "Erro inesperado ao carregar sistemas",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -194,6 +202,30 @@ const Users = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-800">Usuários por Sistema</h2>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <i className="ri-error-warning-line text-red-400"></i>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                Erro ao carregar dados
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+                <button 
+                  onClick={loadSystems}
+                  className="mt-2 text-sm text-red-600 hover:text-red-500 underline"
+                >
+                  Tentar carregar novamente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Tabs Navigation */}
       <div className="bg-white rounded shadow">

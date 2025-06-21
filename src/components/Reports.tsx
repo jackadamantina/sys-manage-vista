@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import VersionInfoComponent from './VersionInfo';
@@ -24,6 +23,7 @@ const Reports = () => {
   const [loading, setLoading] = useState(true);
   const [queryExecuted, setQueryExecuted] = useState(false);
   const { toast } = useToast();
+  const [error, setError] = useState<string | null>(null);
   
   const [queryFilters, setQueryFilters] = useState({
     system: '',
@@ -43,17 +43,23 @@ const Reports = () => {
 
   const loadSystems = async () => {
     try {
+      console.log('Carregando sistemas para relatórios...');
       setLoading(true);
+      setError(null);
+      
       const { data, error } = await supabase
         .from('systems_idm')
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('Sistemas carregados para relatórios:', { data, error });
+
       if (error) {
         console.error('Erro ao carregar sistemas:', error);
+        setError(`Erro ao carregar sistemas: ${error.message}`);
         toast({
           title: "Erro",
-          description: "Erro ao carregar sistemas",
+          description: `Erro ao carregar sistemas: ${error.message}`,
           variant: "destructive"
         });
         return;
@@ -65,9 +71,11 @@ const Reports = () => {
       }
     } catch (error) {
       console.error('Erro ao carregar sistemas:', error);
+      const errorMessage = 'Erro inesperado ao carregar sistemas';
+      setError(errorMessage);
       toast({
         title: "Erro",
-        description: "Erro inesperado ao carregar sistemas",
+        description: errorMessage,
         variant: "destructive"
       });
     } finally {
@@ -167,6 +175,30 @@ const Reports = () => {
           Gerar Relatório
         </button>
       </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+          <div className="flex">
+            <div className="flex-shrink-0">
+              <i className="ri-error-warning-line text-red-400"></i>
+            </div>
+            <div className="ml-3">
+              <h3 className="text-sm font-medium text-red-800">
+                Erro ao carregar dados
+              </h3>
+              <div className="mt-2 text-sm text-red-700">
+                <p>{error}</p>
+                <button 
+                  onClick={loadSystems}
+                  className="mt-2 text-sm text-red-600 hover:text-red-500 underline"
+                >
+                  Tentar carregar novamente
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Versão do Sistema para Relatórios */}
       <VersionInfoComponent versionInfo={currentVersion} />
