@@ -1,102 +1,251 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import Logo from '../components/Logo';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loginData, setLoginData] = useState({
+    email: '',
+    password: ''
+  });
+
+  const [registerData, setRegisterData] = useState({
+    email: '',
+    password: '',
+    confirmPassword: '',
+    username: '',
+    fullName: ''
+  });
+
+  const [isLoading, setIsLoading] = useState(false);
+  const { login, register, user } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Simulação de login - em um sistema real, aqui seria feita a autenticação
-    if (email && password) {
+  // Redirecionar se já estiver logado
+  useEffect(() => {
+    if (user) {
       navigate('/');
     }
+  }, [user, navigate]);
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!loginData.email || !loginData.password) {
+      return;
+    }
+
+    setIsLoading(true);
+    const success = await login(loginData.email, loginData.password);
+    
+    if (success) {
+      navigate('/');
+    }
+    setIsLoading(false);
+  };
+
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!registerData.email || !registerData.password || !registerData.username || !registerData.fullName) {
+      return;
+    }
+
+    if (registerData.password !== registerData.confirmPassword) {
+      return;
+    }
+
+    setIsLoading(true);
+    const success = await register(
+      registerData.email,
+      registerData.password,
+      registerData.username,
+      registerData.fullName
+    );
+    
+    if (success) {
+      setRegisterData({
+        email: '',
+        password: '',
+        confirmPassword: '',
+        username: '',
+        fullName: ''
+      });
+    }
+    setIsLoading(false);
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8">
-        <div className="bg-white rounded-lg shadow-lg p-8">
-          {/* Logo Section */}
-          <div className="text-center mb-8">
-            <div className="flex justify-center mb-4">
-              <Logo size="lg" />
-            </div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">
-              Bem-vindo de volta
-            </h2>
-            <p className="text-gray-600">
-              Faça login para acessar o sistema
-            </p>
-          </div>
+      <div className="max-w-md w-full">
+        <div className="text-center mb-8">
+          <Logo size="lg" />
+        </div>
 
-          {/* Login Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                placeholder="seu@email.com"
-              />
-            </div>
+        <Card>
+          <CardHeader className="text-center">
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Acesso ao Sistema
+            </CardTitle>
+            <CardDescription>
+              Faça login ou crie uma nova conta
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs defaultValue="login" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="login">Login</TabsTrigger>
+                <TabsTrigger value="register">Cadastro</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="login">
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div>
+                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
+                    <Input
+                      id="email"
+                      type="email"
+                      value={loginData.email}
+                      onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                      required
+                      placeholder="seu@email.com"
+                      disabled={isLoading}
+                    />
+                  </div>
 
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-                Senha
-              </label>
-              <input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                placeholder="Sua senha"
-              />
-            </div>
+                  <div>
+                    <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
+                      Senha
+                    </label>
+                    <Input
+                      id="password"
+                      type="password"
+                      value={loginData.password}
+                      onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                      required
+                      placeholder="Sua senha"
+                      disabled={isLoading}
+                    />
+                  </div>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Lembrar de mim
-                </label>
-              </div>
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Entrando...' : 'Entrar'}
+                  </Button>
+                </form>
 
-              <div className="text-sm">
-                <a href="#" className="font-medium text-primary hover:text-primary/80">
-                  Esqueceu a senha?
-                </a>
-              </div>
-            </div>
+                <div className="mt-4 p-4 bg-gray-50 rounded-md">
+                  <p className="text-sm text-gray-600 mb-2">Usuários de teste:</p>
+                  <div className="text-xs text-gray-500 space-y-1">
+                    <div>Admin: admin@idm.com / admin123</div>
+                    <div>Usuário: ricardo@idm.com / 123456</div>
+                  </div>
+                </div>
+              </TabsContent>
+              
+              <TabsContent value="register">
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div>
+                    <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome Completo
+                    </label>
+                    <Input
+                      id="fullName"
+                      type="text"
+                      value={registerData.fullName}
+                      onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
+                      required
+                      placeholder="Seu nome completo"
+                      disabled={isLoading}
+                    />
+                  </div>
 
-            <button
-              type="submit"
-              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors"
-            >
-              Entrar
-            </button>
-          </form>
+                  <div>
+                    <label htmlFor="username" className="block text-sm font-medium text-gray-700 mb-2">
+                      Nome de Usuário
+                    </label>
+                    <Input
+                      id="username"
+                      type="text"
+                      value={registerData.username}
+                      onChange={(e) => setRegisterData({ ...registerData, username: e.target.value })}
+                      required
+                      placeholder="Seu nome de usuário"
+                      disabled={isLoading}
+                    />
+                  </div>
 
-          <div className="mt-6 text-center">
-            <p className="text-xs text-gray-500">
-              © 2024 IDM-Experience. Todos os direitos reservados.
-            </p>
-          </div>
+                  <div>
+                    <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-2">
+                      Email
+                    </label>
+                    <Input
+                      id="register-email"
+                      type="email"
+                      value={registerData.email}
+                      onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                      required
+                      placeholder="seu@email.com"
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-2">
+                      Senha
+                    </label>
+                    <Input
+                      id="register-password"
+                      type="password"
+                      value={registerData.password}
+                      onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                      required
+                      placeholder="Sua senha"
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <div>
+                    <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-2">
+                      Confirmar Senha
+                    </label>
+                    <Input
+                      id="confirm-password"
+                      type="password"
+                      value={registerData.confirmPassword}
+                      onChange={(e) => setRegisterData({ ...registerData, confirmPassword: e.target.value })}
+                      required
+                      placeholder="Confirme sua senha"
+                      disabled={isLoading}
+                    />
+                  </div>
+
+                  <Button 
+                    type="submit" 
+                    className="w-full"
+                    disabled={isLoading || registerData.password !== registerData.confirmPassword}
+                  >
+                    {isLoading ? 'Criando conta...' : 'Criar Conta'}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+
+        <div className="mt-6 text-center">
+          <p className="text-xs text-gray-500">
+            © 2024 IDM-Experience. Todos os direitos reservados.
+          </p>
         </div>
       </div>
     </div>

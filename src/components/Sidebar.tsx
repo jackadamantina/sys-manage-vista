@@ -1,6 +1,8 @@
 
 import React from 'react';
+import { useAuth } from '@/contexts/AuthContext';
 import Logo from './Logo';
+import { Button } from '@/components/ui/button';
 
 type ActivePage = 'dashboard' | 'system-management' | 'reports' | 'user-management' | 'users' | 'settings';
 
@@ -10,6 +12,8 @@ interface SidebarProps {
 }
 
 const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
+  const { user, logout } = useAuth();
+
   const navigationItems = [
     {
       id: 'dashboard' as ActivePage,
@@ -43,6 +47,10 @@ const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
     },
   ];
 
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <div className="w-64 bg-white border-r border-gray-200 flex flex-col">
       <div className="p-4 border-b border-gray-200">
@@ -71,15 +79,24 @@ const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
       </div>
       
       <div className="p-4 border-t border-gray-200">
-        <div className="flex items-center">
+        <div className="flex items-center mb-3">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white">
             <i className="ri-user-line"></i>
           </div>
-          <div className="ml-3">
-            <p className="text-sm font-medium text-gray-700">Ricardo Oliveira</p>
-            <p className="text-xs text-gray-500">Administrador</p>
+          <div className="ml-3 flex-1">
+            <p className="text-sm font-medium text-gray-700">{user?.full_name}</p>
+            <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
           </div>
         </div>
+        <Button 
+          onClick={handleLogout}
+          variant="outline" 
+          size="sm" 
+          className="w-full"
+        >
+          <i className="ri-logout-box-line mr-2"></i>
+          Sair
+        </Button>
       </div>
     </div>
   );

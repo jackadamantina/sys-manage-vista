@@ -135,6 +135,42 @@ export type Database = {
         }
         Relationships: []
       }
+      user_idm: {
+        Row: {
+          created_at: string
+          email: string
+          full_name: string
+          id: string
+          is_active: boolean
+          password: string
+          role: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          password: string
+          role?: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          password?: string
+          role?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
       user_mfa_settings: {
         Row: {
           backup_codes: string[] | null
@@ -197,7 +233,26 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      authenticate_idm_user: {
+        Args: { p_email: string; p_password: string }
+        Returns: {
+          user_id: string
+          email: string
+          username: string
+          full_name: string
+          role: string
+          success: boolean
+        }[]
+      }
+      authenticate_user: {
+        Args: { p_username: string; p_password: string }
+        Returns: {
+          user_id: string
+          username: string
+          role: string
+          success: boolean
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never
