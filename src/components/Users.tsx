@@ -1,5 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface SystemUser {
   id: number;
@@ -17,18 +19,23 @@ interface SystemUserData {
   users: SystemUser[];
 }
 
+interface System {
+  id: string;
+  name: string;
+  description: string | null;
+  url: string | null;
+  created_at: string;
+}
+
 const Users = () => {
+  const { toast } = useToast();
   const [selectedSystem, setSelectedSystem] = useState<string>('');
   const [filePath, setFilePath] = useState<string>('');
+  const [fileLastUpdate, setFileLastUpdate] = useState<string>('');
+  const [systems, setSystems] = useState<System[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  const systems = [
-    { id: 1, name: 'Sistema ERP' },
-    { id: 2, name: 'CRM' },
-    { id: 3, name: 'BI Analytics' },
-    { id: 4, name: 'Portal de RH' },
-    { id: 5, name: 'Sistema Financeiro' },
-  ];
-
+  // Mock data for demonstration - in real implementation, this would come from file parsing
   const systemUsersData: SystemUserData[] = [
     {
       systemId: 1,
@@ -54,13 +61,104 @@ const Users = () => {
     }
   ];
 
+  // Load systems from Supabase
+  const loadSystems = async () => {
+    try {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('systems')
+        .select('id, name, description, url, created_at')
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar sistemas:', error);
+        toast({
+          title: "Erro",
+          description: "Erro ao carregar sistemas",
+          variant: "destructive"
+        });
+        return;
+      }
+
+      setSystems(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar sistemas:', error);
+      toast({
+        title: "Erro",
+        description: "Erro inesperado ao carregar sistemas",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadSystems();
+  }, []);
+
+  // Check file modification date (mock implementation)
+  const checkFileDate = async (path: string) => {
+    // In a real implementation, this would make an API call to check file stats
+    // For now, we'll simulate with a random recent date
+    const mockDate = new Date();
+    mockDate.setHours(mockDate.getHours() - Math.floor(Math.random() * 24));
+    return mockDate.toLocaleString('pt-BR');
+  };
+
   const selectedSystemData = systemUsersData.find(s => s.systemId.toString() === selectedSystem);
 
-  const handleSystemChange = (systemId: string) => {
+  const handleSystemChange = async (systemId: string) => {
     setSelectedSystem(systemId);
-    const systemData = systemUsersData.find(s => s.systemId.toString() === systemId);
-    if (systemData) {
-      setFilePath(systemData.filePath);
+    setFilePath('');
+    setFileLastUpdate('');
+  };
+
+  const handlePathChange = async (path: string) => {
+    setFilePath(path);
+    if (path) {
+      try {
+        const lastUpdate = await checkFileDate(path);
+        setFileLastUpdate(lastUpdate);
+      } catch (error) {
+        console.error('Erro ao verificar arquivo:', error);
+        setFileLastUpdate('Erro ao verificar arquivo');
+      }
+    } else {
+      setFileLastUpdate('');
+    }
+  };
+
+  const handleSavePath = async () => {
+    if (!selectedSystem || !filePath) {
+      toast({
+        title: "Erro",
+        description: "Selecione um sistema e defina o path do arquivo",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      // In a real implementation, you would save this to a database table
+      // For now, we'll just show a success message
+      toast({
+        title: "Sucesso",
+        description: `Path salvo para o sistema selecionado`,
+      });
+      
+      console.log('Salvando path:', {
+        systemId: selectedSystem,
+        filePath: filePath,
+        lastUpdate: fileLastUpdate
+      });
+    } catch (error) {
+      console.error('Erro ao salvar path:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao salvar path do arquivo",
+        variant: "destructive"
+      });
     }
   };
 
@@ -73,21 +171,27 @@ const Users = () => {
       {/* System Selection */}
       <div className="bg-white rounded shadow p-6">
         <h3 className="text-lg font-semibold text-gray-800 mb-4">Seleção de Sistema</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Sistema</label>
-            <select 
-              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
-              value={selectedSystem}
-              onChange={(e) => handleSystemChange(e.target.value)}
-            >
-              <option value="">Selecione um sistema</option>
-              {systems.map((system) => (
-                <option key={system.id} value={system.id.toString()}>
-                  {system.name}
-                </option>
-              ))}
-            </select>
+            {loading ? (
+              <div className="w-full px-4 py-2 border border-gray-300 rounded bg-gray-100">
+                Carregando sistemas...
+              </div>
+            ) : (
+              <select 
+                className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                value={selectedSystem}
+                onChange={(e) => handleSystemChange(e.target.value)}
+              >
+                <option value="">Selecione um sistema</option>
+                {systems.map((system) => (
+                  <option key={system.id} value={system.id}>
+                    {system.name}
+                  </option>
+                ))}
+              </select>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Path dos Arquivos</label>
@@ -95,18 +199,29 @@ const Users = () => {
               type="text"
               className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
               value={filePath}
-              onChange={(e) => setFilePath(e.target.value)}
+              onChange={(e) => handlePathChange(e.target.value)}
               placeholder="/path/to/users/file"
+              disabled={!selectedSystem}
             />
           </div>
           <div>
-            {selectedSystemData && (
+            {fileLastUpdate && (
               <div className="text-sm text-gray-600">
-                <span className="font-medium">Última atualização:</span>
+                <span className="font-medium">Última atualização do arquivo:</span>
                 <br />
-                {selectedSystemData.lastUpdate}
+                {fileLastUpdate}
               </div>
             )}
+          </div>
+          <div>
+            <button
+              onClick={handleSavePath}
+              disabled={!selectedSystem || !filePath}
+              className="px-4 py-2 bg-primary text-white rounded-button disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              <i className="ri-save-line mr-2"></i>
+              Salvar Path
+            </button>
           </div>
         </div>
       </div>
@@ -130,6 +245,16 @@ const Users = () => {
                 </button>
               </div>
             </div>
+            {filePath && (
+              <div className="mt-2 text-sm text-gray-600">
+                <span className="font-medium">Arquivo:</span> {filePath}
+                {fileLastUpdate && (
+                  <span className="ml-4">
+                    <span className="font-medium">Atualizado em:</span> {fileLastUpdate}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="overflow-x-auto">
@@ -180,6 +305,16 @@ const Users = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* Show message when no system is selected */}
+      {!selectedSystem && (
+        <div className="bg-white rounded shadow p-6">
+          <div className="text-center py-8">
+            <i className="ri-computer-line text-4xl text-gray-300 mb-4"></i>
+            <p className="text-gray-500">Selecione um sistema para visualizar os usuários</p>
           </div>
         </div>
       )}
