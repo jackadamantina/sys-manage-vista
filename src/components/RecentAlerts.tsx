@@ -32,7 +32,7 @@ const RecentAlerts = () => {
   const fetchSystemsAndGenerateAlerts = async () => {
     try {
       const { data: systems, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .select('id, name, mfa_configuration, password_complexity, named_users, created_at')
         .order('created_at', { ascending: false });
 

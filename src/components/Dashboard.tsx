@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
 import StatsCard from './StatsCard';
@@ -48,7 +47,7 @@ const Dashboard = () => {
   const fetchSystems = async () => {
     try {
       const { data, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .select('id, name, mfa_configuration, sso_configuration, logs_status, offboarding_type, created_at');
 
       if (error) {

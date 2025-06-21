@@ -171,7 +171,7 @@ export type Database = {
         }
         Relationships: []
       }
-      systems: {
+      systems_idm: {
         Row: {
           access_type: string | null
           created_at: string
@@ -179,6 +179,7 @@ export type Database = {
           description: string | null
           hosting: string | null
           id: string
+          integrated_users: boolean | null
           integration_type: string | null
           log_types: Json | null
           logs_status: string | null
@@ -206,6 +207,7 @@ export type Database = {
           description?: string | null
           hosting?: string | null
           id?: string
+          integrated_users?: boolean | null
           integration_type?: string | null
           log_types?: Json | null
           logs_status?: string | null
@@ -233,6 +235,7 @@ export type Database = {
           description?: string | null
           hosting?: string | null
           id?: string
+          integrated_users?: boolean | null
           integration_type?: string | null
           log_types?: Json | null
           logs_status?: string | null

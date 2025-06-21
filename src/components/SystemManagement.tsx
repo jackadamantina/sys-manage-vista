@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -83,7 +82,7 @@ const SystemManagement = () => {
     try {
       setLoading(true);
       const { data, error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .select('*')
         .order('created_at', { ascending: false });
 
@@ -127,7 +126,7 @@ const SystemManagement = () => {
     try {
       if (isEditing && editingId) {
         const { error } = await supabase
-          .from('systems')
+          .from('systems_idm')
           .update(data)
           .eq('id', editingId);
 
@@ -139,7 +138,7 @@ const SystemManagement = () => {
         });
       } else {
         const { error } = await supabase
-          .from('systems')
+          .from('systems_idm')
           .insert([{
             ...data,
             user_id: user.id
@@ -181,7 +180,7 @@ const SystemManagement = () => {
 
     try {
       const { error } = await supabase
-        .from('systems')
+        .from('systems_idm')
         .delete()
         .eq('id', id);
 
