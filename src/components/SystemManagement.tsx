@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,8 +33,8 @@ interface System {
   offboarding_type: string;
   offboarding_priority: string;
   named_users: boolean;
+  integrated_users: boolean;
   sso_configuration: string;
-  integration_type: string;
   region_blocking: string;
   mfa_configuration: string;
   mfa_policy: string;
@@ -65,8 +66,8 @@ const SystemManagement = () => {
       offboarding_type: '',
       offboarding_priority: '',
       named_users: false,
+      integrated_users: false,
       sso_configuration: '',
-      integration_type: '',
       region_blocking: '',
       mfa_configuration: '',
       mfa_policy: '',
@@ -75,6 +76,8 @@ const SystemManagement = () => {
       log_types: {}
     }
   });
+
+  const watchMfaConfiguration = form.watch('mfa_configuration');
 
   const loadSystems = async () => {
     try {
@@ -410,9 +413,10 @@ const SystemManagement = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="enabled">Habilitado</SelectItem>
-                          <SelectItem value="disabled">Desabilitado</SelectItem>
-                          <SelectItem value="pending">Pendente</SelectItem>
+                          <SelectItem value="habilitado">Habilitado</SelectItem>
+                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
+                          <SelectItem value="desenvolver">Desenvolver</SelectItem>
+                          <SelectItem value="upgrade-licenca">Upgrade de Licença</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -435,9 +439,9 @@ const SystemManagement = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="enabled">Habilitado</SelectItem>
-                          <SelectItem value="disabled">Desabilitado</SelectItem>
-                          <SelectItem value="optional">Opcional</SelectItem>
+                          <SelectItem value="habilitado">Habilitado</SelectItem>
+                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
+                          <SelectItem value="opcional">Opcional</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -451,16 +455,20 @@ const SystemManagement = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Política MFA</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={watchMfaConfiguration === 'desabilitado'}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="Política MFA" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="required">Obrigatório</SelectItem>
-                          <SelectItem value="optional">Opcional</SelectItem>
-                          <SelectItem value="conditional">Condicional</SelectItem>
+                          <SelectItem value="obrigatorio">Obrigatório</SelectItem>
+                          <SelectItem value="opcional">Opcional</SelectItem>
+                          <SelectItem value="condicional">Condicional</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -474,15 +482,19 @@ const SystemManagement = () => {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Política MFA SMS</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        defaultValue={field.value}
+                        disabled={watchMfaConfiguration === 'desabilitado'}
+                      >
                         <FormControl>
                           <SelectTrigger>
                             <SelectValue placeholder="MFA SMS" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="enabled">Habilitado</SelectItem>
-                          <SelectItem value="disabled">Desabilitado</SelectItem>
+                          <SelectItem value="habilitado">Habilitado</SelectItem>
+                          <SelectItem value="desabilitado">Desabilitado</SelectItem>
                           <SelectItem value="backup-only">Apenas Backup</SelectItem>
                         </SelectContent>
                       </Select>
@@ -491,6 +503,29 @@ const SystemManagement = () => {
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="region_blocking"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Bloqueio de acesso por região</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Bloqueio de acesso por região" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="aplicado">Aplicado</SelectItem>
+                        <SelectItem value="nao-aplicado">Não Aplicado</SelectItem>
+                        <SelectItem value="sem-possibilidade">Sem Possibilidade</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </div>
 
             {/* Gestão de Usuários */}
@@ -511,9 +546,9 @@ const SystemManagement = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="automated">Automatizado</SelectItem>
+                          <SelectItem value="automatizado">Automatizado</SelectItem>
                           <SelectItem value="manual">Manual</SelectItem>
-                          <SelectItem value="semi-automated">Semi-automatizado</SelectItem>
+                          <SelectItem value="semi-automatizado">Semi-automatizado</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -534,9 +569,9 @@ const SystemManagement = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="automated">Automatizado</SelectItem>
+                          <SelectItem value="automatizado">Automatizado</SelectItem>
                           <SelectItem value="manual">Manual</SelectItem>
-                          <SelectItem value="semi-automated">Semi-automatizado</SelectItem>
+                          <SelectItem value="semi-automatizado">Semi-automatizado</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -557,9 +592,9 @@ const SystemManagement = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="high">Alta</SelectItem>
-                          <SelectItem value="medium">Média</SelectItem>
-                          <SelectItem value="low">Baixa</SelectItem>
+                          <SelectItem value="alta">Alta</SelectItem>
+                          <SelectItem value="media">Média</SelectItem>
+                          <SelectItem value="baixa">Baixa</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -568,74 +603,44 @@ const SystemManagement = () => {
                 />
               </div>
               
-              <FormField
-                control={form.control}
-                name="named_users"
-                render={({ field }) => (
-                  <FormItem className="flex flex-row items-center justify-between rounded-lg border p-4">
-                    <div className="space-y-0.5">
-                      <FormLabel className="text-base">Usuários Nomeados</FormLabel>
-                      <div className="text-sm text-muted-foreground">
-                        Sistema utiliza usuários nomeados
-                      </div>
-                    </div>
-                    <FormControl>
-                      <Switch
-                        checked={field.value}
-                        onCheckedChange={field.onChange}
-                      />
-                    </FormControl>
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            {/* Integração e Configurações Avançadas */}
-            <div className="space-y-4">
-              <h4 className="text-md font-medium text-gray-700 border-b pb-2">Integração e Configurações</h4>
-              
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
-                  name="integration_type"
+                  name="named_users"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Tipo de Integração</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>Usuários Nomeados</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === 'sim')} defaultValue={field.value ? 'sim' : 'nao'}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Tipo de integração" />
+                            <SelectValue placeholder="Usuários nomeados" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="api">API</SelectItem>
-                          <SelectItem value="ldap">LDAP</SelectItem>
-                          <SelectItem value="saml">SAML</SelectItem>
-                          <SelectItem value="oauth">OAuth</SelectItem>
-                          <SelectItem value="manual">Manual</SelectItem>
+                          <SelectItem value="sim">Sim</SelectItem>
+                          <SelectItem value="nao">Não</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-                
+
                 <FormField
                   control={form.control}
-                  name="region_blocking"
+                  name="integrated_users"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Bloqueio Regional</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormLabel>Usuários Integrados</FormLabel>
+                      <Select onValueChange={(value) => field.onChange(value === 'sim')} defaultValue={field.value ? 'sim' : 'nao'}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Bloqueio regional" />
+                            <SelectValue placeholder="Usuários integrados" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="enabled">Habilitado</SelectItem>
-                          <SelectItem value="disabled">Desabilitado</SelectItem>
-                          <SelectItem value="partial">Parcial</SelectItem>
+                          <SelectItem value="sim">Sim</SelectItem>
+                          <SelectItem value="nao">Não</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -663,9 +668,9 @@ const SystemManagement = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="enabled">Habilitado</SelectItem>
-                          <SelectItem value="disabled">Desabilitado</SelectItem>
-                          <SelectItem value="partial">Parcial</SelectItem>
+                          <SelectItem value="ativo">Ativo</SelectItem>
+                          <SelectItem value="inativo">Inativo</SelectItem>
+                          <SelectItem value="parcial">Parcial</SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -877,6 +882,9 @@ const SystemManagement = () => {
                     Segurança
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Usuários
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Criado em
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -906,7 +914,13 @@ const SystemManagement = () => {
                       <div className="space-y-1">
                         <div className="text-xs">MFA: {system.mfa_configuration}</div>
                         <div className="text-xs">SSO: {system.sso_configuration}</div>
-                        <div className="text-xs">Integração: {system.integration_type}</div>
+                        <div className="text-xs">Bloqueio Regional: {system.region_blocking}</div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <div className="space-y-1">
+                        <div className="text-xs">Nomeados: {system.named_users ? 'Sim' : 'Não'}</div>
+                        <div className="text-xs">Integrados: {system.integrated_users ? 'Sim' : 'Não'}</div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
