@@ -96,7 +96,13 @@ const SystemManagement = () => {
         return;
       }
 
-      setSystems(data || []);
+      // Transform database data to match our interface
+      const transformedData = data?.map(system => ({
+        ...system,
+        named_users: system.named_users === true ? 'sim' : system.named_users === false ? 'nao' : system.named_users || ''
+      })) || [];
+
+      setSystems(transformedData);
     } catch (error) {
       console.error('Erro ao carregar sistemas:', error);
       toast({
@@ -124,10 +130,16 @@ const SystemManagement = () => {
     }
 
     try {
+      // Transform data for database insertion/update
+      const dbData = {
+        ...data,
+        named_users: data.named_users === 'sim' ? true : data.named_users === 'nao' ? false : null
+      };
+
       if (isEditing && editingId) {
         const { error } = await supabase
           .from('systems_idm')
-          .update(data)
+          .update(dbData)
           .eq('id', editingId);
 
         if (error) throw error;
@@ -140,8 +152,8 @@ const SystemManagement = () => {
         const { error } = await supabase
           .from('systems_idm')
           .insert([{
-            ...data,
-            user_id: user.id
+            ...dbData,
+            created_by: user.id
           }]);
 
         if (error) throw error;
