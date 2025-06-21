@@ -1,216 +1,81 @@
 
 import React, { useState, useEffect } from 'react';
-import { Search } from 'lucide-react';
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
 import { supabase } from '@/integrations/supabase/client';
-import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   title: string;
 }
 
-interface SearchResult {
-  id: string;
-  title: string;
-  type: 'Sistema' | 'Usuário';
-  subtitle?: string;
-  url?: string;
-}
-
 const Header = ({ title }: HeaderProps) => {
-  const [open, setOpen] = useState(false);
-  const [searchValue, setSearchValue] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
-  const [loading, setLoading] = useState(false);
-  const { toast } = useToast();
+  const [alertCount, setAlertCount] = useState(0);
 
-  const currentDate = new Date().toLocaleDateString('pt-BR', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-  });
+  // Mock data de alertas recentes - deve vir do dashboard
+  const recentAlerts = [
+    {
+      title: 'Arquivo de usuários desatualizado',
+      description: 'Sistema ERP - 7 dias sem atualização',
+      time: '21/06/2025 - 09:45',
+      date: new Date('2025-06-21T09:45:00'),
+    },
+    {
+      title: 'MFA não configurado',
+      description: 'Sistema de Helpdesk - Configuração pendente',
+      time: '20/06/2025 - 14:23',
+      date: new Date('2025-06-20T14:23:00'),
+    },
+    {
+      title: 'Usuários inativos detectados',
+      description: 'Portal de RH - 12 usuários sem atividade',
+      time: '19/06/2025 - 16:10',
+      date: new Date('2025-06-19T16:10:00'),
+    },
+    {
+      title: 'Novo sistema adicionado',
+      description: 'Sistema de Gestão de Projetos - Aguardando configuração',
+      time: '18/06/2025 - 11:35',
+      date: new Date('2025-06-18T11:35:00'),
+    },
+    {
+      title: 'Auditoria de logs concluída',
+      description: 'Sistema Financeiro - Sem irregularidades',
+      time: '17/06/2025 - 17:22',
+      date: new Date('2025-06-17T17:22:00'),
+    },
+  ];
 
-  const searchDatabase = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const results: SearchResult[] = [];
-
-      // Buscar sistemas
-      const { data: systems, error: systemsError } = await supabase
-        .from('systems')
-        .select('id, name, description, url')
-        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
-        .limit(10);
-
-      if (systemsError) {
-        console.error('Erro ao buscar sistemas:', systemsError);
-      } else if (systems) {
-        systems.forEach(system => {
-          results.push({
-            id: system.id,
-            title: system.name,
-            type: 'Sistema',
-            subtitle: system.description || undefined,
-            url: system.url || undefined
-          });
-        });
-      }
-
-      // Buscar usuários
-      const { data: users, error: usersError } = await supabase
-        .from('user_idm')
-        .select('id, username, full_name, email')
-        .or(`username.ilike.%${query}%,full_name.ilike.%${query}%,email.ilike.%${query}%`)
-        .limit(10);
-
-      if (usersError) {
-        console.error('Erro ao buscar usuários:', usersError);
-      } else if (users) {
-        users.forEach(user => {
-          results.push({
-            id: user.id,
-            title: user.full_name || user.username,
-            type: 'Usuário',
-            subtitle: user.email
-          });
-        });
-      }
-
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Erro na pesquisa:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao realizar pesquisa",
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Debounce da pesquisa
   useEffect(() => {
-    const timeoutId = setTimeout(() => {
-      searchDatabase(searchValue);
-    }, 300);
-
-    return () => clearTimeout(timeoutId);
-  }, [searchValue]);
-
-  const handleSearchSelect = (item: SearchResult) => {
-    console.log('Item selecionado:', item);
-    setOpen(false);
-    setSearchValue("");
-    
-    // Aqui você pode implementar navegação ou outras ações
-    if (item.url && item.type === 'Sistema') {
-      window.open(item.url, '_blank');
-    }
-    
-    toast({
-      title: "Item selecionado",
-      description: `${item.type}: ${item.title}`,
-    });
-  };
+    // Ordenar alertas por data mais recente e definir contagem
+    const sortedAlerts = recentAlerts.sort((a, b) => b.date.getTime() - a.date.getTime());
+    setAlertCount(sortedAlerts.length);
+  }, []);
 
   return (
-    <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-      <div className="flex items-center justify-between px-6 py-3">
-        <div className="flex items-center">
-          <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
-        </div>
+    <header className="bg-white shadow-sm border-b border-gray-200">
+      <div className="flex justify-between items-center px-6 py-4">
+        <h1 className="text-2xl font-semibold text-gray-800">{title}</h1>
+        
         <div className="flex items-center space-x-4">
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <button className="text-gray-500 hover:text-gray-700 focus:outline-none">
-                <div className="w-6 h-6 flex items-center justify-center">
-                  <Search className="h-4 w-4" />
-                </div>
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-80 p-0" align="end">
-              <Command>
-                <CommandInput 
-                  placeholder="Pesquisar sistemas e usuários..." 
-                  value={searchValue}
-                  onValueChange={setSearchValue}
-                />
-                <CommandList>
-                  {loading ? (
-                    <div className="py-6 text-center text-sm">
-                      Pesquisando...
-                    </div>
-                  ) : (
-                    <>
-                      <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-                      {searchResults.length > 0 && (
-                        <CommandGroup heading="Resultados">
-                          {searchResults.map((item) => (
-                            <CommandItem
-                              key={`${item.type}-${item.id}`}
-                              value={item.title}
-                              onSelect={() => handleSearchSelect(item)}
-                              className="cursor-pointer"
-                            >
-                              <div className="flex flex-col w-full">
-                                <div className="flex items-center justify-between">
-                                  <span className="font-medium">{item.title}</span>
-                                  <span className={`text-xs px-2 py-1 rounded ${
-                                    item.type === 'Sistema' 
-                                      ? 'bg-blue-100 text-blue-700' 
-                                      : 'bg-green-100 text-green-700'
-                                  }`}>
-                                    {item.type}
-                                  </span>
-                                </div>
-                                {item.subtitle && (
-                                  <span className="text-xs text-gray-500 mt-1">{item.subtitle}</span>
-                                )}
-                                {item.url && (
-                                  <span className="text-xs text-blue-500 mt-1 truncate">{item.url}</span>
-                                )}
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      )}
-                    </>
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          {/* Sino de alertas com contador */}
           <div className="relative">
-            <button className="text-gray-500 hover:text-gray-700 focus:outline-none relative">
-              <div className="w-6 h-6 flex items-center justify-center">
-                <i className="ri-notification-3-line"></i>
-              </div>
-              <span className="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                3
-              </span>
+            <button className="p-2 text-gray-500 hover:text-gray-700 relative">
+              <i className="ri-notification-3-line text-xl"></i>
+              {alertCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                  {alertCount}
+                </span>
+              )}
             </button>
           </div>
-          <div className="border-l border-gray-300 h-6"></div>
-          <div className="text-sm text-gray-600">
-            {currentDate}
+
+          {/* Outros elementos do header */}
+          <div className="flex items-center space-x-3">
+            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
+              <span className="text-white text-sm font-medium">U</span>
+            </div>
+            <div className="text-sm">
+              <div className="font-medium text-gray-900">Usuário</div>
+              <div className="text-gray-500">Administrador</div>
+            </div>
           </div>
         </div>
       </div>

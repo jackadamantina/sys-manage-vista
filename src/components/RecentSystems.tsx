@@ -1,42 +1,83 @@
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+
+interface System {
+  id: string;
+  name: string;
+  url: string | null;
+  responsible: string | null;
+  created_at: string;
+  updated_at: string;
+}
 
 const RecentSystems = () => {
-  const systems = [
-    {
-      name: 'Sistema ERP',
-      url: 'erp.empresa.com.br',
-      responsible: 'Marcelo Almeida',
-      status: 'Ativo',
-      lastUpdate: '20/06/2025',
-      icon: 'ri-database-2-line',
-      iconBg: 'bg-blue-100',
-      iconColor: 'text-primary',
-      statusColor: 'bg-green-100 text-green-800',
-    },
-    {
-      name: 'CRM',
-      url: 'crm.empresa.com.br',
-      responsible: 'Fernanda Costa',
-      status: 'Ativo',
-      lastUpdate: '19/06/2025',
-      icon: 'ri-customer-service-2-line',
-      iconBg: 'bg-purple-100',
-      iconColor: 'text-purple-500',
-      statusColor: 'bg-green-100 text-green-800',
-    },
-    {
-      name: 'BI Analytics',
-      url: 'bi.empresa.com.br',
-      responsible: 'Roberto Santos',
-      status: 'Manutenção',
-      lastUpdate: '18/06/2025',
-      icon: 'ri-file-chart-line',
-      iconBg: 'bg-green-100',
-      iconColor: 'text-green-500',
-      statusColor: 'bg-yellow-100 text-yellow-800',
-    },
-  ];
+  const [systems, setSystems] = useState<System[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchRecentSystems();
+  }, []);
+
+  const fetchRecentSystems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('systems')
+        .select('id, name, url, responsible, created_at, updated_at')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (error) {
+        console.error('Erro ao buscar sistemas recentes:', error);
+        return;
+      }
+
+      setSystems(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar sistemas recentes:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('pt-BR');
+  };
+
+  const getSystemIcon = (index: number) => {
+    const icons = [
+      { icon: 'ri-database-2-line', bg: 'bg-blue-100', color: 'text-primary' },
+      { icon: 'ri-customer-service-2-line', bg: 'bg-purple-100', color: 'text-purple-500' },
+      { icon: 'ri-file-chart-line', bg: 'bg-green-100', color: 'text-green-500' },
+      { icon: 'ri-settings-3-line', bg: 'bg-orange-100', color: 'text-orange-500' },
+      { icon: 'ri-computer-line', bg: 'bg-indigo-100', color: 'text-indigo-500' },
+    ];
+    return icons[index % icons.length];
+  };
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded shadow">
+        <div className="p-5 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800">Sistemas Recentes</h3>
+        </div>
+        <div className="p-5">
+          <div className="animate-pulse space-y-4">
+            {[1, 2, 3].map((item) => (
+              <div key={item} className="flex items-center space-x-3">
+                <div className="w-8 h-8 bg-gray-200 rounded-full"></div>
+                <div className="flex-1">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 mt-2"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white rounded shadow">
@@ -60,7 +101,7 @@ const RecentSystems = () => {
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Última Atualização
+                Criado em
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Ações
@@ -68,45 +109,58 @@ const RecentSystems = () => {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {systems.map((system, index) => (
-              <tr key={index}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="flex items-center">
-                    <div className={`w-8 h-8 rounded-full ${system.iconBg} flex items-center justify-center ${system.iconColor}`}>
-                      <i className={system.icon}></i>
+            {systems.map((system, index) => {
+              const iconConfig = getSystemIcon(index);
+              return (
+                <tr key={system.id}>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center">
+                      <div className={`w-8 h-8 rounded-full ${iconConfig.bg} flex items-center justify-center ${iconConfig.color}`}>
+                        <i className={iconConfig.icon}></i>
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm font-medium text-gray-900">{system.name}</div>
+                        {system.url && (
+                          <div className="text-xs text-gray-500">{system.url}</div>
+                        )}
+                      </div>
                     </div>
-                    <div className="ml-3">
-                      <div className="text-sm font-medium text-gray-900">{system.name}</div>
-                      <div className="text-xs text-gray-500">{system.url}</div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {system.responsible || 'Não definido'}
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{system.responsible}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${system.statusColor}`}>
-                    {system.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {system.lastUpdate}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  <div className="flex space-x-2">
-                    <button className="text-gray-500 hover:text-primary">
-                      <i className="ri-eye-line"></i>
-                    </button>
-                    <button className="text-gray-500 hover:text-primary">
-                      <i className="ri-edit-line"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
+                      Ativo
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(system.created_at)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <div className="flex space-x-2">
+                      <button className="text-gray-500 hover:text-primary">
+                        <i className="ri-eye-line"></i>
+                      </button>
+                      <button className="text-gray-500 hover:text-primary">
+                        <i className="ri-edit-line"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
+      {systems.length === 0 && (
+        <div className="p-5 text-center text-gray-500">
+          <i className="ri-database-line text-3xl mb-2"></i>
+          <p>Nenhum sistema encontrado</p>
+        </div>
+      )}
     </div>
   );
 };

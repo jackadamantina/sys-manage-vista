@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 
 interface UserDiscrepancy {
@@ -14,6 +15,7 @@ const UserComparison = () => {
   const [importedUsers, setImportedUsers] = useState<File | null>(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisComplete, setAnalysisComplete] = useState(false);
+  const [importedData, setImportedData] = useState<any[]>([]);
 
   // Função para comparação inteligente de usuários
   const compareUsers = (systemUser: string, importedUser: string): { match: boolean; type: string; similarity: number } => {
@@ -138,15 +140,31 @@ const UserComparison = () => {
   const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Sobrescrever dados anteriores
       setImportedUsers(file);
+      setImportedData([]);
+      setAnalysisComplete(false);
+      console.log('Arquivo anterior foi sobrescrito com:', file.name);
     }
   };
 
   const handleAnalyze = () => {
     setIsAnalyzing(true);
+    
+    // Simulação de processamento do arquivo
     setTimeout(() => {
+      // Simular dados importados (sobrescrever dados anteriores)
+      const newImportedData = [
+        { name: 'ro.oliveira@allin.com.br', system: 'Arquivo Importado' },
+        { name: 'p.silva@empresa.com.br', system: 'Arquivo Importado' },
+        { name: 'ana@empresa.com.br', system: 'Arquivo Importado' }
+      ];
+      
+      setImportedData(newImportedData);
       setIsAnalyzing(false);
       setAnalysisComplete(true);
+      
+      console.log('Dados anteriores foram sobrescritos. Novos dados importados:', newImportedData);
     }, 3000);
   };
 
@@ -232,9 +250,15 @@ const UserComparison = () => {
               className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
             />
             {importedUsers && (
-              <p className="text-sm text-gray-600 mt-2">
-                Arquivo selecionado: {importedUsers.name}
-              </p>
+              <div className="mt-2 space-y-1">
+                <p className="text-sm text-gray-600">
+                  Arquivo selecionado: {importedUsers.name}
+                </p>
+                <p className="text-xs text-amber-600 bg-amber-50 px-2 py-1 rounded">
+                  <i className="ri-information-line mr-1"></i>
+                  Este arquivo irá sobrescrever os dados anteriores
+                </p>
+              </div>
             )}
           </div>
 
@@ -247,7 +271,7 @@ const UserComparison = () => {
               {isAnalyzing ? (
                 <>
                   <i className="ri-loader-4-line mr-2 animate-spin"></i>
-                  Analisando...
+                  Analisando e Sobrescrevendo...
                 </>
               ) : (
                 <>
@@ -260,7 +284,7 @@ const UserComparison = () => {
             {analysisComplete && (
               <div className="text-sm text-green-600 flex items-center">
                 <i className="ri-check-line mr-1"></i>
-                Análise concluída
+                Análise concluída - Dados sobrescritos
               </div>
             )}
           </div>
