@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import GlobalUserSearch from './GlobalUserSearch';
+import UserComparison from './UserComparison';
 
 interface SystemUser {
   id: number;
@@ -30,12 +31,14 @@ interface System {
 
 const Users = () => {
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<'search' | 'systems'>('search');
+  const [activeTab, setActiveTab] = useState<'search' | 'systems' | 'comparison'>('search');
   const [selectedSystem, setSelectedSystem] = useState<string>('');
   const [filePath, setFilePath] = useState<string>('');
   const [fileLastUpdate, setFileLastUpdate] = useState<string>('');
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState(true);
+  const [comparisonFile, setComparisonFile] = useState<File | null>(null);
+  const [showComparison, setShowComparison] = useState(false);
   
   // Mock data for demonstration - in real implementation, this would come from file parsing
   const systemUsersData: SystemUserData[] = [
@@ -111,6 +114,8 @@ const Users = () => {
     setSelectedSystem(systemId);
     setFilePath('');
     setFileLastUpdate('');
+    setComparisonFile(null);
+    setShowComparison(false);
   };
 
   const handlePathChange = async (path: string) => {
@@ -159,6 +164,31 @@ const Users = () => {
     }
   };
 
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setComparisonFile(file);
+      setShowComparison(false);
+    }
+  };
+
+  const handleCompareUsers = () => {
+    if (!selectedSystem || !comparisonFile) {
+      toast({
+        title: "Erro",
+        description: "Selecione um sistema e anexe um arquivo para comparação",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setShowComparison(true);
+    toast({
+      title: "Comparação Iniciada",
+      description: "Comparando usuários do arquivo com o sistema selecionado",
+    });
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -191,12 +221,25 @@ const Users = () => {
               <i className="ri-computer-line mr-2"></i>
               Por Sistema
             </button>
+            <button
+              onClick={() => setActiveTab('comparison')}
+              className={`px-4 py-2 text-sm font-medium rounded-md ${
+                activeTab === 'comparison'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <i className="ri-file-compare-line mr-2"></i>
+              Comparação de Usuários
+            </button>
           </div>
         </div>
       </div>
 
       {/* Tab Content */}
       {activeTab === 'search' && <GlobalUserSearch />}
+
+      {activeTab === 'comparison' && <UserComparison />}
 
       {activeTab === 'systems' && (
         <>
@@ -257,6 +300,108 @@ const Users = () => {
               </div>
             </div>
           </div>
+
+          {/* File Upload for Comparison */}
+          {selectedSystem && (
+            <div className="bg-white rounded shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">Comparação de Usuários</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Arquivo para Comparação (CSV, Excel, JSON)
+                  </label>
+                  <input
+                    type="file"
+                    accept=".csv,.xlsx,.xls,.json"
+                    onChange={handleFileUpload}
+                    className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+                  />
+                  {comparisonFile && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      Arquivo selecionado: {comparisonFile.name}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <button
+                    onClick={handleCompareUsers}
+                    disabled={!selectedSystem || !comparisonFile}
+                    className="px-4 py-2 bg-green-500 text-white rounded-button disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                  >
+                    <i className="ri-file-compare-line mr-2"></i>
+                    Comparar Usuários
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Comparison Results */}
+          {showComparison && selectedSystem && comparisonFile && (
+            <div className="bg-white rounded shadow p-6">
+              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                Resultado da Comparação
+              </h3>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center">
+                  <i className="ri-information-line text-blue-500 mr-2"></i>
+                  <div>
+                    <p className="text-sm text-blue-800">
+                      Comparando arquivo <strong>{comparisonFile.name}</strong> com dados do sistema{' '}
+                      <strong>{systems.find(s => s.id === selectedSystem)?.name}</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Mock comparison results */}
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <i className="ri-check-circle-line text-green-500 mr-2"></i>
+                      <div>
+                        <p className="text-sm font-medium text-green-800">Usuários Idênticos</p>
+                        <p className="text-lg font-bold text-green-900">15</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-orange-50 border border-orange-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <i className="ri-user-add-line text-orange-500 mr-2"></i>
+                      <div>
+                        <p className="text-sm font-medium text-orange-800">Usuários Faltantes</p>
+                        <p className="text-lg font-bold text-orange-900">3</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <div className="flex items-center">
+                      <i className="ri-user-unfollow-line text-red-500 mr-2"></i>
+                      <div>
+                        <p className="text-sm font-medium text-red-800">Usuários Extras</p>
+                        <p className="text-lg font-bold text-red-900">2</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end space-x-2">
+                  <button className="px-4 py-2 text-primary border border-primary rounded-button hover:bg-primary hover:text-white transition-colors">
+                    <i className="ri-download-line mr-2"></i>
+                    Exportar Relatório
+                  </button>
+                  <button 
+                    onClick={() => setActiveTab('comparison')}
+                    className="px-4 py-2 bg-primary text-white rounded-button hover:bg-primary-dark transition-colors"
+                  >
+                    <i className="ri-eye-line mr-2"></i>
+                    Ver Detalhes
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Users Table */}
           {selectedSystemData && (
