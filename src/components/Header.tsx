@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search } from 'lucide-react';
 import {
   Command,
@@ -14,14 +14,27 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 
 interface HeaderProps {
   title: string;
 }
 
+interface SearchResult {
+  id: string;
+  title: string;
+  type: 'Sistema' | 'Usuário';
+  subtitle?: string;
+  url?: string;
+}
+
 const Header = ({ title }: HeaderProps) => {
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+  const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const currentDate = new Date().toLocaleDateString('pt-BR', {
     day: '2-digit',
@@ -29,24 +42,93 @@ const Header = ({ title }: HeaderProps) => {
     year: 'numeric',
   });
 
-  // Mock search results - in a real app, this would come from your data
-  const searchResults = [
-    { id: 1, title: 'Dashboard', type: 'Página', url: '/dashboard' },
-    { id: 2, title: 'Sistemas', type: 'Página', url: '/sistemas' },
-    { id: 3, title: 'Usuários', type: 'Página', url: '/usuarios' },
-    { id: 4, title: 'Relatórios', type: 'Página', url: '/relatorios' },
-    { id: 5, title: 'Sistema ERP', type: 'Sistema', url: '/sistema/erp' },
-    { id: 6, title: 'Sistema CRM', type: 'Sistema', url: '/sistema/crm' },
-  ].filter(item => 
-    item.title.toLowerCase().includes(searchValue.toLowerCase()) ||
-    item.type.toLowerCase().includes(searchValue.toLowerCase())
-  );
+  const searchDatabase = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
 
-  const handleSearchSelect = (item: any) => {
-    console.log('Navegando para:', item);
+    setLoading(true);
+    try {
+      const results: SearchResult[] = [];
+
+      // Buscar sistemas
+      const { data: systems, error: systemsError } = await supabase
+        .from('systems')
+        .select('id, name, description, url')
+        .or(`name.ilike.%${query}%,description.ilike.%${query}%`)
+        .limit(10);
+
+      if (systemsError) {
+        console.error('Erro ao buscar sistemas:', systemsError);
+      } else if (systems) {
+        systems.forEach(system => {
+          results.push({
+            id: system.id,
+            title: system.name,
+            type: 'Sistema',
+            subtitle: system.description || undefined,
+            url: system.url || undefined
+          });
+        });
+      }
+
+      // Buscar usuários
+      const { data: users, error: usersError } = await supabase
+        .from('user_idm')
+        .select('id, username, full_name, email')
+        .or(`username.ilike.%${query}%,full_name.ilike.%${query}%,email.ilike.%${query}%`)
+        .limit(10);
+
+      if (usersError) {
+        console.error('Erro ao buscar usuários:', usersError);
+      } else if (users) {
+        users.forEach(user => {
+          results.push({
+            id: user.id,
+            title: user.full_name || user.username,
+            type: 'Usuário',
+            subtitle: user.email
+          });
+        });
+      }
+
+      setSearchResults(results);
+    } catch (error) {
+      console.error('Erro na pesquisa:', error);
+      toast({
+        title: "Erro",
+        description: "Erro ao realizar pesquisa",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Debounce da pesquisa
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      searchDatabase(searchValue);
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchValue]);
+
+  const handleSearchSelect = (item: SearchResult) => {
+    console.log('Item selecionado:', item);
     setOpen(false);
     setSearchValue("");
-    // In a real app, you would navigate to the selected item
+    
+    // Aqui você pode implementar navegação ou outras ações
+    if (item.url && item.type === 'Sistema') {
+      window.open(item.url, '_blank');
+    }
+    
+    toast({
+      title: "Item selecionado",
+      description: `${item.type}: ${item.title}`,
+    });
   };
 
   return (
@@ -67,28 +149,50 @@ const Header = ({ title }: HeaderProps) => {
             <PopoverContent className="w-80 p-0" align="end">
               <Command>
                 <CommandInput 
-                  placeholder="Pesquisar páginas e sistemas..." 
+                  placeholder="Pesquisar sistemas e usuários..." 
                   value={searchValue}
                   onValueChange={setSearchValue}
                 />
                 <CommandList>
-                  <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
-                  {searchResults.length > 0 && (
-                    <CommandGroup heading="Resultados">
-                      {searchResults.map((item) => (
-                        <CommandItem
-                          key={item.id}
-                          value={item.title}
-                          onSelect={() => handleSearchSelect(item)}
-                          className="cursor-pointer"
-                        >
-                          <div className="flex flex-col">
-                            <span className="font-medium">{item.title}</span>
-                            <span className="text-xs text-gray-500">{item.type}</span>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
+                  {loading ? (
+                    <div className="py-6 text-center text-sm">
+                      Pesquisando...
+                    </div>
+                  ) : (
+                    <>
+                      <CommandEmpty>Nenhum resultado encontrado.</CommandEmpty>
+                      {searchResults.length > 0 && (
+                        <CommandGroup heading="Resultados">
+                          {searchResults.map((item) => (
+                            <CommandItem
+                              key={`${item.type}-${item.id}`}
+                              value={item.title}
+                              onSelect={() => handleSearchSelect(item)}
+                              className="cursor-pointer"
+                            >
+                              <div className="flex flex-col w-full">
+                                <div className="flex items-center justify-between">
+                                  <span className="font-medium">{item.title}</span>
+                                  <span className={`text-xs px-2 py-1 rounded ${
+                                    item.type === 'Sistema' 
+                                      ? 'bg-blue-100 text-blue-700' 
+                                      : 'bg-green-100 text-green-700'
+                                  }`}>
+                                    {item.type}
+                                  </span>
+                                </div>
+                                {item.subtitle && (
+                                  <span className="text-xs text-gray-500 mt-1">{item.subtitle}</span>
+                                )}
+                                {item.url && (
+                                  <span className="text-xs text-blue-500 mt-1 truncate">{item.url}</span>
+                                )}
+                              </div>
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      )}
+                    </>
                   )}
                 </CommandList>
               </Command>
