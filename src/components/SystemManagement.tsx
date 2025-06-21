@@ -206,6 +206,25 @@ const SystemManagement = () => {
     form.reset();
   };
 
+  const logRetentionOptions = [
+    { value: '30-days', label: '30 dias' },
+    { value: '90-days', label: '90 dias' },
+    { value: '180-days', label: '180 dias' },
+    { value: '1-year', label: '1 ano' },
+    { value: '2-years', label: '2 anos' },
+    { value: '5-years', label: '5 anos' },
+    { value: 'indefinite', label: 'Indefinido' }
+  ];
+
+  const logTypes = [
+    { key: 'login_logs', label: 'Logs de Login' },
+    { key: 'access_logs', label: 'Logs de Acesso' },
+    { key: 'audit_logs', label: 'Logs de Auditoria' },
+    { key: 'security_logs', label: 'Logs de Segurança' },
+    { key: 'system_logs', label: 'Logs do Sistema' },
+    { key: 'error_logs', label: 'Logs de Erro' }
+  ];
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -659,21 +678,19 @@ const SystemManagement = () => {
                   name="log_types"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Política de Retenção de Logs</FormLabel>
-                      <Select onValueChange={(value) => field.onChange({ retention_policy: value })} defaultValue={field.value?.retention_policy}>
+                      <FormLabel>Política Geral de Retenção</FormLabel>
+                      <Select onValueChange={(value) => field.onChange({ ...field.value, general_retention: value })} defaultValue={field.value?.general_retention}>
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Política de retenção" />
+                            <SelectValue placeholder="Política geral" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="30-days">30 dias</SelectItem>
-                          <SelectItem value="90-days">90 dias</SelectItem>
-                          <SelectItem value="180-days">180 dias</SelectItem>
-                          <SelectItem value="1-year">1 ano</SelectItem>
-                          <SelectItem value="2-years">2 anos</SelectItem>
-                          <SelectItem value="5-years">5 anos</SelectItem>
-                          <SelectItem value="indefinite">Indefinido</SelectItem>
+                          {logRetentionOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -682,44 +699,80 @@ const SystemManagement = () => {
                 />
               </div>
 
-              {/* Tipos de Logs */}
-              <div className="space-y-3">
-                <FormLabel>Tipos de Logs Coletados</FormLabel>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                  {[
-                    { key: 'login_logs', label: 'Logs de Login' },
-                    { key: 'access_logs', label: 'Logs de Acesso' },
-                    { key: 'audit_logs', label: 'Logs de Auditoria' },
-                    { key: 'security_logs', label: 'Logs de Segurança' },
-                    { key: 'system_logs', label: 'Logs do Sistema' },
-                    { key: 'error_logs', label: 'Logs de Erro' }
-                  ].map((logType) => (
-                    <FormField
-                      key={logType.key}
-                      control={form.control}
-                      name="log_types"
-                      render={({ field }) => (
-                        <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                          <FormControl>
-                            <Checkbox
-                              checked={field.value?.[logType.key] || false}
-                              onCheckedChange={(checked) => {
-                                const currentValue = field.value || {};
-                                field.onChange({
-                                  ...currentValue,
-                                  [logType.key]: checked
-                                });
-                              }}
-                            />
-                          </FormControl>
-                          <div className="space-y-1 leading-none">
-                            <FormLabel className="text-sm font-normal">
-                              {logType.label}
-                            </FormLabel>
-                          </div>
-                        </FormItem>
-                      )}
-                    />
+              {/* Tipos de Logs com Retenção Individual */}
+              <div className="space-y-4">
+                <FormLabel>Tipos de Logs e Retenção Individual</FormLabel>
+                <div className="space-y-4 border rounded-lg p-4">
+                  {logTypes.map((logType) => (
+                    <div key={logType.key} className="flex items-center justify-between space-x-4 p-3 border rounded">
+                      <div className="flex items-center space-x-3">
+                        <FormField
+                          control={form.control}
+                          name="log_types"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-center space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.[logType.key]?.enabled || false}
+                                  onCheckedChange={(checked) => {
+                                    const currentValue = field.value || {};
+                                    field.onChange({
+                                      ...currentValue,
+                                      [logType.key]: {
+                                        ...currentValue[logType.key],
+                                        enabled: checked
+                                      }
+                                    });
+                                  }}
+                                />
+                              </FormControl>
+                              <FormLabel className="text-sm font-medium">
+                                {logType.label}
+                              </FormLabel>
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                      
+                      <div className="flex-1 max-w-xs">
+                        <FormField
+                          control={form.control}
+                          name="log_types"
+                          render={({ field }) => (
+                            <FormItem>
+                              <Select 
+                                onValueChange={(value) => {
+                                  const currentValue = field.value || {};
+                                  field.onChange({
+                                    ...currentValue,
+                                    [logType.key]: {
+                                      ...currentValue[logType.key],
+                                      retention: value
+                                    }
+                                  });
+                                }} 
+                                defaultValue={field.value?.[logType.key]?.retention}
+                                disabled={!field.value?.[logType.key]?.enabled}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Retenção" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {logRetentionOptions.map((option) => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                      {option.label}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
