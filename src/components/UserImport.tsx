@@ -158,6 +158,7 @@ const UserImport = () => {
   // Fazer upload e processar arquivo
   const handleFileUpload = async () => {
     if (!selectedFile || !user) {
+      console.log('Erro: arquivo não selecionado ou usuário não logado', { selectedFile, user });
       toast({
         title: "Erro",
         description: "Selecione um arquivo e certifique-se de estar logado",
@@ -166,12 +167,18 @@ const UserImport = () => {
       return;
     }
 
+    console.log('Iniciando upload do arquivo:', selectedFile.name);
+    console.log('Usuário logado:', user);
+    
     setUploading(true);
     try {
+      console.log('Processando arquivo...');
       // Processar o arquivo
       const users = await processFile(selectedFile);
+      console.log('Usuários processados:', users);
       
       if (users.length === 0) {
+        console.log('Nenhum usuário válido encontrado');
         toast({
           title: "Aviso",
           description: "Nenhum usuário válido encontrado no arquivo",
@@ -180,6 +187,7 @@ const UserImport = () => {
         return;
       }
 
+      console.log('Registrando arquivo de importação...');
       // Registrar o arquivo de importação
       const { data: importFileData, error: fileError } = await supabase
         .from('user_import_files_idm')
@@ -196,26 +204,44 @@ const UserImport = () => {
 
       if (fileError) {
         console.error('Erro ao registrar arquivo:', fileError);
+        console.error('Dados que tentamos inserir:', {
+          file_name: selectedFile.name,
+          file_size: selectedFile.size,
+          imported_by: user.id,
+          total_records: users.length,
+          processed_records: 0,
+          status: 'processing'
+        });
         throw fileError;
       }
 
+      console.log('Arquivo registrado com sucesso:', importFileData);
+
+      console.log('Inserindo usuários importados...');
       // Inserir usuários importados
       const usersToInsert = users.map(user => ({
         ...user,
         status: 'active'
       }));
 
-      const { error: usersError } = await supabase
+      console.log('Dados dos usuários a serem inseridos:', usersToInsert);
+
+      const { error: usersError, data: insertedUsers } = await supabase
         .from('imported_users_idm')
-        .insert(usersToInsert);
+        .insert(usersToInsert)
+        .select();
 
       if (usersError) {
         console.error('Erro ao inserir usuários:', usersError);
+        console.error('Dados que tentamos inserir:', usersToInsert);
         throw usersError;
       }
 
+      console.log('Usuários inseridos com sucesso:', insertedUsers);
+
+      console.log('Atualizando status do arquivo...');
       // Atualizar status do arquivo
-      await supabase
+      const { error: updateError } = await supabase
         .from('user_import_files_idm')
         .update({
           processed_records: users.length,
@@ -223,6 +249,12 @@ const UserImport = () => {
         })
         .eq('id', importFileData.id);
 
+      if (updateError) {
+        console.error('Erro ao atualizar status do arquivo:', updateError);
+        throw updateError;
+      }
+
+      console.log('Importação concluída com sucesso!');
       toast({
         title: "Sucesso",
         description: `${users.length} usuários importados com sucesso`,
@@ -233,10 +265,11 @@ const UserImport = () => {
       setSelectedFile(null);
 
     } catch (error) {
-      console.error('Erro durante importação:', error);
+      console.error('Erro durante importação (catch block):', error);
+      console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A');
       toast({
         title: "Erro",
-        description: "Erro durante a importação dos usuários",
+        description: `Erro durante a importação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
         variant: "destructive"
       });
     } finally {
