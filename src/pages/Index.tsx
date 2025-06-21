@@ -40,7 +40,7 @@ const Index = () => {
       case 'user-management':
         return 'Gestão de Usuários';
       case 'users':
-        return 'Usuários';
+        return 'Usuários e Sistemas';
       case 'settings':
         return 'Configurações';
       default:

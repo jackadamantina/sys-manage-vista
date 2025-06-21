@@ -31,19 +31,22 @@ const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
       icon: 'ri-file-chart-line',
     },
     {
-      id: 'user-management' as ActivePage,
-      label: 'Gestão de Usuários',
-      icon: 'ri-user-settings-line',
-    },
-    {
       id: 'users' as ActivePage,
-      label: 'Usuários',
+      label: 'Usuários e Sistemas',
       icon: 'ri-group-line',
     },
     {
       id: 'settings' as ActivePage,
       label: 'Configurações',
       icon: 'ri-settings-3-line',
+      hasSubmenu: true,
+      submenu: [
+        {
+          id: 'user-management' as ActivePage,
+          label: 'Gestão de Usuários',
+          icon: 'ri-user-settings-line',
+        }
+      ]
     },
   ];
 
@@ -60,20 +63,43 @@ const Sidebar = ({ activePage, onPageChange }: SidebarProps) => {
       <div className="flex-1 overflow-y-auto py-4">
         <nav className="space-y-1 px-2">
           {navigationItems.map((item) => (
-            <button
-              key={item.id}
-              onClick={() => onPageChange(item.id)}
-              className={`sidebar-link w-full flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors ${
-                activePage === item.id
-                  ? 'active'
-                  : 'text-gray-600 hover:bg-gray-50'
-              }`}
-            >
-              <div className="w-6 h-6 flex items-center justify-center mr-3">
-                <i className={`${item.icon} ${activePage === item.id ? 'text-primary' : 'text-gray-500'}`}></i>
-              </div>
-              {item.label}
-            </button>
+            <div key={item.id}>
+              <button
+                onClick={() => onPageChange(item.id)}
+                className={`sidebar-link w-full flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors ${
+                  activePage === item.id
+                    ? 'active'
+                    : 'text-gray-600 hover:bg-gray-50'
+                }`}
+              >
+                <div className="w-6 h-6 flex items-center justify-center mr-3">
+                  <i className={`${item.icon} ${activePage === item.id ? 'text-primary' : 'text-gray-500'}`}></i>
+                </div>
+                {item.label}
+              </button>
+              
+              {/* Submenu */}
+              {item.hasSubmenu && item.submenu && activePage === item.id && (
+                <div className="ml-6 mt-1 space-y-1">
+                  {item.submenu.map((subItem) => (
+                    <button
+                      key={subItem.id}
+                      onClick={() => onPageChange(subItem.id)}
+                      className={`sidebar-link w-full flex items-center px-3 py-2 text-sm font-medium rounded-md transition-colors ${
+                        activePage === subItem.id
+                          ? 'active'
+                          : 'text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="w-5 h-5 flex items-center justify-center mr-3">
+                        <i className={`${subItem.icon} text-xs ${activePage === subItem.id ? 'text-primary' : 'text-gray-500'}`}></i>
+                      </div>
+                      {subItem.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           ))}
         </nav>
       </div>
