@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import VersionInfoComponent from './VersionInfo';
@@ -539,8 +540,8 @@ const SystemManagement = () => {
                   {logsStatus === 'enabled' && (
                     <div className="space-y-6">
                       <div>
-                        <div className="flex items-center mb-2">
-                          <label className="block text-sm font-medium text-gray-700">Tipos de Logs</label>
+                        <div className="flex items-center mb-4">
+                          <label className="block text-sm font-medium text-gray-700">Tipos de Logs e Retenção</label>
                           <Tooltip>
                             <TooltipTrigger asChild>
                               <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
@@ -548,49 +549,51 @@ const SystemManagement = () => {
                               </div>
                             </TooltipTrigger>
                             <TooltipContent>
-                              <p>Selecione os tipos de logs que deseja monitorar</p>
+                              <p>Selecione os tipos de logs e sua respectiva retenção</p>
                             </TooltipContent>
                           </Tooltip>
                         </div>
-                        <div className="space-y-2">
-                          <label className="flex items-center">
-                            <input type="checkbox" name="log_types" value="system" className="mr-2" />
-                            <span className="text-sm text-gray-700">Logs do Sistema</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input type="checkbox" name="log_types" value="application" className="mr-2" />
-                            <span className="text-sm text-gray-700">Logs da Aplicação</span>
-                          </label>
-                          <label className="flex items-center">
-                            <input type="checkbox" name="log_types" value="access" className="mr-2" />
-                            <span className="text-sm text-gray-700">Logs de Acesso</span>
-                          </label>
+                        <div className="space-y-4">
+                          <div className="flex items-center justify-between p-4 border border-gray-300 rounded">
+                            <div className="flex items-center">
+                              <input type="checkbox" name="log_types" value="system" className="mr-3" />
+                              <span className="text-sm text-gray-700">Logs do Sistema</span>
+                            </div>
+                            <select className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                              <option value="">Selecione retenção</option>
+                              <option value="15-less">15 dias ou menos</option>
+                              <option value="15-30">15 dias à 30 dias</option>
+                              <option value="30-60">30 dias à 60 dias</option>
+                              <option value="60-plus">Acima de 60 dias</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center justify-between p-4 border border-gray-300 rounded">
+                            <div className="flex items-center">
+                              <input type="checkbox" name="log_types" value="application" className="mr-3" />
+                              <span className="text-sm text-gray-700">Logs da Aplicação</span>
+                            </div>
+                            <select className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                              <option value="">Selecione retenção</option>
+                              <option value="15-less">15 dias ou menos</option>
+                              <option value="15-30">15 dias à 30 dias</option>
+                              <option value="30-60">30 dias à 60 dias</option>
+                              <option value="60-plus">Acima de 60 dias</option>
+                            </select>
+                          </div>
+                          <div className="flex items-center justify-between p-4 border border-gray-300 rounded">
+                            <div className="flex items-center">
+                              <input type="checkbox" name="log_types" value="access" className="mr-3" />
+                              <span className="text-sm text-gray-700">Logs de Acesso</span>
+                            </div>
+                            <select className="px-3 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-primary focus:border-primary">
+                              <option value="">Selecione retenção</option>
+                              <option value="15-less">15 dias ou menos</option>
+                              <option value="15-30">15 dias à 30 dias</option>
+                              <option value="30-60">30 dias à 60 dias</option>
+                              <option value="60-plus">Acima de 60 dias</option>
+                            </select>
+                          </div>
                         </div>
-                      </div>
-
-                      <div>
-                        <div className="flex items-center mb-2">
-                          <label className="block text-sm font-medium text-gray-700">Retenção</label>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center">
-                                <i className="ri-question-line"></i>
-                              </div>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Período de retenção dos logs em dias</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </div>
-                        <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
-                          <option value="">Selecione o período</option>
-                          <option value="30">30 dias</option>
-                          <option value="60">60 dias</option>
-                          <option value="90">90 dias</option>
-                          <option value="180">180 dias</option>
-                          <option value="365">1 ano</option>
-                          <option value="custom">Personalizado</option>
-                        </select>
                       </div>
                     </div>
                   )}
