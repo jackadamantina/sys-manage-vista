@@ -83,18 +83,35 @@ const SystemManagement = () => {
                 />
               </div>
 
-              <div>
-                <div className="flex items-center mb-2">
-                  <label className="block text-sm font-medium text-gray-700">Hosting</label>
-                  <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Ambiente onde o sistema está hospedado">
-                    <i className="ri-question-line"></i>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <div className="flex items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Hosting</label>
+                    <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Ambiente onde o sistema está hospedado">
+                      <i className="ri-question-line"></i>
+                    </div>
                   </div>
+                  <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">Selecione o hosting</option>
+                    <option value="on-premises">On-premises</option>
+                    <option value="cloud">Cloud</option>
+                    <option value="cloudstack">Cloudstack</option>
+                  </select>
                 </div>
-                <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
-                  <option value="">Selecione o hosting</option>
-                  <option value="interno">Interno</option>
-                  <option value="externo">Externo</option>
-                </select>
+
+                <div>
+                  <div className="flex items-center mb-2">
+                    <label className="block text-sm font-medium text-gray-700">Acesso ao Sistema</label>
+                    <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Tipo de acesso disponível para o sistema">
+                      <i className="ri-question-line"></i>
+                    </div>
+                  </div>
+                  <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+                    <option value="">Selecione o acesso</option>
+                    <option value="interno">Interno</option>
+                    <option value="externo">Externo</option>
+                  </select>
+                </div>
               </div>
             </div>
           </section>
