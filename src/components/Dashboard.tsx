@@ -1,3 +1,4 @@
+
 import React, { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
 import StatsCard from './StatsCard';
@@ -5,78 +6,92 @@ import RecentSystems from './RecentSystems';
 import RecentAlerts from './RecentAlerts';
 import { supabase } from '@/integrations/supabase/client';
 
+interface System {
+  id: string;
+  name: string;
+  mfa_configuration: string | null;
+  sso_configuration: string | null;
+  logs_status: string | null;
+  offboarding_type: string | null;
+  created_at: string;
+}
+
 const Dashboard = () => {
   const resourceChartRef = useRef<HTMLDivElement>(null);
   const securityChartRef = useRef<HTMLDivElement>(null);
   const [importedUsersCount, setImportedUsersCount] = useState(0);
-
-  // Mock data for systems - in real app this would come from API/database
-  const systems = [
-    {
-      id: 1,
-      name: 'Sistema de RH',
-      description: 'Sistema para gestão de recursos humanos da empresa',
-      url: 'https://rh.empresa.com',
-      createdAt: '2024-01-15',
-      totalUsers: 145,
-      mfaEnabled: true
-    },
-    {
-      id: 2,
-      name: 'Portal Financeiro',
-      description: 'Portal para controle e gestão financeira',
-      url: 'https://financeiro.empresa.com',
-      createdAt: '2024-02-20',
-      totalUsers: 89,
-      mfaEnabled: true
-    },
-    {
-      id: 3,
-      name: 'Sistema de Vendas',
-      description: 'Plataforma para gerenciamento de vendas e CRM',
-      url: 'https://vendas.empresa.com',
-      createdAt: '2024-03-10',
-      totalUsers: 234,
-      mfaEnabled: false
-    },
-    {
-      id: 4,
-      name: 'Portal do Cliente',
-      description: 'Portal de autoatendimento para clientes',
-      url: 'https://cliente.empresa.com',
-      createdAt: '2024-03-25',
-      totalUsers: 567,
-      mfaEnabled: true
-    },
-    {
-      id: 5,
-      name: 'Sistema de Estoque',
-      description: 'Sistema para controle de estoque e inventário',
-      url: 'https://estoque.empresa.com',
-      createdAt: '2024-04-10',
-      totalUsers: 78,
-      mfaEnabled: false
-    },
-    {
-      id: 6,
-      name: 'Portal de Comunicação',
-      description: 'Portal interno para comunicação empresarial',
-      url: 'https://comunicacao.empresa.com',
-      createdAt: '2024-04-22',
-      totalUsers: 141,
-      mfaEnabled: true
-    }
-  ];
-
-  // Calculate statistics
-  const totalSystems = systems.length;
-  const systemsWithMFA = systems.filter(system => system.mfaEnabled).length;
+  const [systems, setSystems] = useState<System[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchImportedUsersCount();
-    // Resource Distribution Chart
+    fetchSystems();
+  }, []);
+
+  const fetchImportedUsersCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('imported_users_idm')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Erro ao buscar contagem de usuários importados:', error);
+        return;
+      }
+
+      setImportedUsersCount(count || 0);
+    } catch (error) {
+      console.error('Erro ao buscar contagem de usuários importados:', error);
+    }
+  };
+
+  const fetchSystems = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('systems')
+        .select('id, name, mfa_configuration, sso_configuration, logs_status, offboarding_type, created_at');
+
+      if (error) {
+        console.error('Erro ao buscar sistemas:', error);
+        return;
+      }
+
+      setSystems(data || []);
+    } catch (error) {
+      console.error('Erro ao buscar sistemas:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Calculate statistics from real data
+  const totalSystems = systems.length;
+  const systemsWithMFA = systems.filter(system => 
+    system.mfa_configuration && system.mfa_configuration.toLowerCase().includes('ativo')
+  ).length;
+
+  const systemsWithSSO = systems.filter(system => 
+    system.sso_configuration && system.sso_configuration.toLowerCase().includes('configurado')
+  ).length;
+
+  const systemsWithLogs = systems.filter(system => 
+    system.logs_status && system.logs_status.toLowerCase().includes('ativo')
+  ).length;
+
+  const systemsWithAutoOffboarding = systems.filter(system => 
+    system.offboarding_type && system.offboarding_type.toLowerCase().includes('automático')
+  ).length;
+
+  useEffect(() => {
+    if (loading || systems.length === 0) return;
+
+    // Resource Distribution Chart - based on systems over months
     if (resourceChartRef.current) {
       const resourceChart = echarts.init(resourceChartRef.current);
+      
+      // Generate monthly data based on system creation dates
+      const monthlyData = generateMonthlySystemData(systems);
+      
       const resourceOption = {
         animation: false,
         tooltip: {
@@ -85,7 +100,7 @@ const Dashboard = () => {
           textStyle: { color: '#1f2937' }
         },
         legend: {
-          data: ['SSO', 'MFA', 'Logs', 'Integração'],
+          data: ['SSO', 'MFA', 'Logs', 'Offboarding Automático'],
           bottom: 0
         },
         grid: {
@@ -123,7 +138,7 @@ const Dashboard = () => {
                 ]
               }
             },
-            data: [12, 15, 18, 20, 22, 25, 28, 30, 32, 35, 38, 40]
+            data: monthlyData.sso
           },
           {
             name: 'MFA',
@@ -139,7 +154,7 @@ const Dashboard = () => {
                 ]
               }
             },
-            data: [10, 12, 15, 18, 20, 22, 25, 28, 30, 32, 33, 35]
+            data: monthlyData.mfa
           },
           {
             name: 'Logs',
@@ -155,10 +170,10 @@ const Dashboard = () => {
                 ]
               }
             },
-            data: [8, 10, 12, 15, 18, 20, 22, 25, 27, 29, 30, 32]
+            data: monthlyData.logs
           },
           {
-            name: 'Integração',
+            name: 'Offboarding Automático',
             type: 'line',
             smooth: true,
             lineStyle: { width: 2, color: 'rgba(252, 141, 98, 1)' },
@@ -171,14 +186,14 @@ const Dashboard = () => {
                 ]
               }
             },
-            data: [5, 8, 10, 12, 15, 18, 20, 22, 24, 25, 26, 28]
+            data: monthlyData.offboarding
           }
         ]
       };
       resourceChart.setOption(resourceOption);
     }
 
-    // Security Status Chart
+    // Security Status Chart - based on real system data
     if (securityChartRef.current) {
       const securityChart = echarts.init(securityChartRef.current);
       const securityOption = {
@@ -186,7 +201,8 @@ const Dashboard = () => {
         tooltip: {
           trigger: 'item',
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          textStyle: { color: '#1f2937' }
+          textStyle: { color: '#1f2937' },
+          formatter: '{a} <br/>{b}: {c} ({d}%)'
         },
         legend: {
           orient: 'vertical',
@@ -205,32 +221,50 @@ const Dashboard = () => {
           emphasis: { label: { show: true, fontSize: '14', fontWeight: 'bold' } },
           labelLine: { show: false },
           data: [
-            { value: 78, name: 'MFA Ativo', itemStyle: { color: 'rgba(87, 181, 231, 1)' } },
-            { value: 65, name: 'SSO Configurado', itemStyle: { color: 'rgba(141, 211, 199, 1)' } },
-            { value: 92, name: 'Logs Ativos', itemStyle: { color: 'rgba(251, 191, 114, 1)' } },
-            { value: 42, name: 'Offboarding Automático', itemStyle: { color: 'rgba(252, 141, 98, 1)' } }
+            { value: systemsWithMFA, name: 'MFA Ativo', itemStyle: { color: 'rgba(87, 181, 231, 1)' } },
+            { value: systemsWithSSO, name: 'SSO Configurado', itemStyle: { color: 'rgba(141, 211, 199, 1)' } },
+            { value: systemsWithLogs, name: 'Logs Ativos', itemStyle: { color: 'rgba(251, 191, 114, 1)' } },
+            { value: systemsWithAutoOffboarding, name: 'Offboarding Automático', itemStyle: { color: 'rgba(252, 141, 98, 1)' } }
           ]
         }]
       };
       securityChart.setOption(securityOption);
     }
-  }, []);
+  }, [systems, loading]);
 
-  const fetchImportedUsersCount = async () => {
-    try {
-      const { count, error } = await supabase
-        .from('imported_users_idm')
-        .select('*', { count: 'exact', head: true });
+  const generateMonthlySystemData = (systems: System[]) => {
+    const currentYear = new Date().getFullYear();
+    const monthlyCount = {
+      sso: new Array(12).fill(0),
+      mfa: new Array(12).fill(0),
+      logs: new Array(12).fill(0),
+      offboarding: new Array(12).fill(0)
+    };
 
-      if (error) {
-        console.error('Erro ao buscar contagem de usuários importados:', error);
-        return;
+    systems.forEach(system => {
+      const createdDate = new Date(system.created_at);
+      if (createdDate.getFullYear() === currentYear) {
+        const month = createdDate.getMonth();
+        
+        // Accumulate counts for each month
+        for (let i = month; i < 12; i++) {
+          if (system.sso_configuration && system.sso_configuration.toLowerCase().includes('configurado')) {
+            monthlyCount.sso[i]++;
+          }
+          if (system.mfa_configuration && system.mfa_configuration.toLowerCase().includes('ativo')) {
+            monthlyCount.mfa[i]++;
+          }
+          if (system.logs_status && system.logs_status.toLowerCase().includes('ativo')) {
+            monthlyCount.logs[i]++;
+          }
+          if (system.offboarding_type && system.offboarding_type.toLowerCase().includes('automático')) {
+            monthlyCount.offboarding[i]++;
+          }
+        }
       }
+    });
 
-      setImportedUsersCount(count || 0);
-    } catch (error) {
-      console.error('Erro ao buscar contagem de usuários importados:', error);
-    }
+    return monthlyCount;
   };
 
   const statsData = [
@@ -260,7 +294,7 @@ const Dashboard = () => {
       icon: 'ri-shield-check-line',
       iconBg: 'bg-purple-100',
       iconColor: 'text-purple-500',
-      change: `${Math.round((systemsWithMFA / totalSystems) * 100)}%`,
+      change: totalSystems > 0 ? `${Math.round((systemsWithMFA / totalSystems) * 100)}%` : '0%',
       changeText: 'dos sistemas totais',
       isPositive: true,
     },
@@ -299,7 +333,13 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-          <div ref={resourceChartRef} className="h-64"></div>
+          {loading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="animate-pulse text-gray-500">Carregando dados...</div>
+            </div>
+          ) : (
+            <div ref={resourceChartRef} className="h-64"></div>
+          )}
         </div>
 
         <div className="bg-white rounded shadow p-5">
@@ -314,7 +354,13 @@ const Dashboard = () => {
               </button>
             </div>
           </div>
-          <div ref={securityChartRef} className="h-64"></div>
+          {loading ? (
+            <div className="h-64 flex items-center justify-center">
+              <div className="animate-pulse text-gray-500">Carregando dados...</div>
+            </div>
+          ) : (
+            <div ref={securityChartRef} className="h-64"></div>
+          )}
         </div>
       </div>
 
