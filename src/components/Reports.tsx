@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import VersionInfoComponent from './VersionInfo';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
 
 const Reports = () => {
   const [queryFilters, setQueryFilters] = useState({
@@ -19,6 +20,38 @@ const Reports = () => {
   });
 
   const { currentVersion } = useVersioning();
+
+  // Mock data for systems - in real app this would come from API/database
+  const systems = [
+    {
+      id: 1,
+      name: 'Sistema de RH',
+      description: 'Sistema para gestão de recursos humanos da empresa',
+      url: 'https://rh.empresa.com',
+      createdAt: '2024-01-15'
+    },
+    {
+      id: 2,
+      name: 'Portal Financeiro',
+      description: 'Portal para controle e gestão financeira',
+      url: 'https://financeiro.empresa.com',
+      createdAt: '2024-02-20'
+    },
+    {
+      id: 3,
+      name: 'Sistema de Vendas',
+      description: 'Plataforma para gerenciamento de vendas e CRM',
+      url: 'https://vendas.empresa.com',
+      createdAt: '2024-03-10'
+    },
+    {
+      id: 4,
+      name: 'Portal do Cliente',
+      description: 'Portal de autoatendimento para clientes',
+      url: 'https://cliente.empresa.com',
+      createdAt: '2024-03-25'
+    }
+  ];
 
   const handleFilterChange = (field: string, value: any) => {
     setQueryFilters(prev => ({
@@ -45,6 +78,45 @@ const Reports = () => {
 
       {/* Versão do Sistema para Relatórios */}
       <VersionInfoComponent versionInfo={currentVersion} />
+
+      {/* Listagem de Sistemas */}
+      <div className="bg-white rounded shadow">
+        <div className="p-6 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-800">Sistemas Cadastrados</h3>
+          <p className="text-sm text-gray-500 mt-1">Lista completa de todos os sistemas registrados no portal</p>
+        </div>
+        <div className="p-6">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nome do Sistema</TableHead>
+                <TableHead>Descrição</TableHead>
+                <TableHead>URL</TableHead>
+                <TableHead>Data de Cadastro</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {systems.map((system) => (
+                <TableRow key={system.id}>
+                  <TableCell className="font-medium">{system.name}</TableCell>
+                  <TableCell>{system.description}</TableCell>
+                  <TableCell>
+                    <a 
+                      href={system.url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:text-primary-dark hover:underline"
+                    >
+                      {system.url}
+                    </a>
+                  </TableCell>
+                  <TableCell>{new Date(system.createdAt).toLocaleDateString('pt-BR')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </div>
 
       {/* Query Builder */}
       <div className="bg-white rounded shadow p-6">
