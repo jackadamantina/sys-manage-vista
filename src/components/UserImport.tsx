@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -88,25 +87,27 @@ const UserImport = () => {
   // Função corrigida para processar arquivo CSV/Excel
   const processFile = (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
+      console.log('🔄 Iniciando processamento do arquivo:', file.name);
       const reader = new FileReader();
       
       reader.onload = (e) => {
         try {
           const text = e.target?.result as string;
+          console.log('📄 Conteúdo do arquivo lido:', text.substring(0, 200) + '...');
+          
           const lines = text.split('\n').filter(line => line.trim());
+          console.log('📝 Total de linhas encontradas:', lines.length);
           
           if (lines.length === 0) {
+            console.error('❌ Arquivo vazio');
             reject(new Error('Arquivo vazio'));
             return;
           }
 
-          console.log('Processando arquivo com', lines.length, 'linhas');
-          
           // Primeira linha são os cabeçalhos
           const headerLine = lines[0];
           const headers = headerLine.split(',').map(h => h.trim().toLowerCase());
-          
-          console.log('Cabeçalhos encontrados:', headers);
+          console.log('📋 Cabeçalhos encontrados:', headers);
           
           const users = [];
           
@@ -116,7 +117,7 @@ const UserImport = () => {
             if (!line) continue;
             
             const values = line.split(',').map(v => v.trim().replace(/"/g, ''));
-            console.log('Processando linha:', values);
+            console.log(`📊 Processando linha ${i}:`, values);
             
             const user: any = {};
             
@@ -138,19 +139,26 @@ const UserImport = () => {
             // Verificar se pelo menos o nome foi preenchido
             if (user.name && user.name.trim()) {
               users.push(user);
-              console.log('Usuário adicionado:', user);
+              console.log('✅ Usuário adicionado:', user);
+            } else {
+              console.log('⚠️ Linha ignorada (nome vazio):', user);
             }
           }
           
-          console.log('Total de usuários processados:', users.length);
+          console.log('🎯 Total de usuários processados:', users.length);
           resolve(users);
         } catch (error) {
-          console.error('Erro ao processar arquivo:', error);
+          console.error('❌ Erro ao processar arquivo:', error);
+          console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A');
           reject(error);
         }
       };
       
-      reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
+      reader.onerror = (error) => {
+        console.error('❌ Erro ao ler arquivo:', error);
+        reject(new Error('Erro ao ler arquivo'));
+      };
+      
       reader.readAsText(file);
     });
   };
@@ -158,7 +166,7 @@ const UserImport = () => {
   // Fazer upload e processar arquivo
   const handleFileUpload = async () => {
     if (!selectedFile || !user) {
-      console.log('Erro: arquivo não selecionado ou usuário não logado', { selectedFile, user });
+      console.error('❌ Erro: arquivo não selecionado ou usuário não logado', { selectedFile, user });
       toast({
         title: "Erro",
         description: "Selecione um arquivo e certifique-se de estar logado",
@@ -167,18 +175,18 @@ const UserImport = () => {
       return;
     }
 
-    console.log('Iniciando upload do arquivo:', selectedFile.name);
-    console.log('Usuário logado:', user);
+    console.log('🚀 Iniciando processo de importação...');
+    console.log('📁 Arquivo:', selectedFile.name, 'Tamanho:', selectedFile.size);
+    console.log('👤 Usuário logado:', user.id);
     
     setUploading(true);
     try {
-      console.log('Processando arquivo...');
-      // Processar o arquivo
+      console.log('⚙️ Etapa 1: Processando arquivo...');
       const users = await processFile(selectedFile);
-      console.log('Usuários processados:', users);
+      console.log('✅ Arquivo processado. Usuários encontrados:', users.length);
       
       if (users.length === 0) {
-        console.log('Nenhum usuário válido encontrado');
+        console.warn('⚠️ Nenhum usuário válido encontrado');
         toast({
           title: "Aviso",
           description: "Nenhum usuário válido encontrado no arquivo",
@@ -187,44 +195,39 @@ const UserImport = () => {
         return;
       }
 
-      console.log('Registrando arquivo de importação...');
-      // Registrar o arquivo de importação
-      const { data: importFileData, error: fileError } = await supabase
+      console.log('⚙️ Etapa 2: Registrando arquivo de importação...');
+      const importFileData = {
+        file_name: selectedFile.name,
+        file_size: selectedFile.size,
+        imported_by: user.id,
+        total_records: users.length,
+        processed_records: 0,
+        status: 'processing'
+      };
+      console.log('📋 Dados do arquivo a serem inseridos:', importFileData);
+
+      const { data: fileData, error: fileError } = await supabase
         .from('user_import_files_idm')
-        .insert([{
-          file_name: selectedFile.name,
-          file_size: selectedFile.size,
-          imported_by: user.id,
-          total_records: users.length,
-          processed_records: 0,
-          status: 'processing'
-        }])
+        .insert([importFileData])
         .select()
         .single();
 
       if (fileError) {
-        console.error('Erro ao registrar arquivo:', fileError);
-        console.error('Dados que tentamos inserir:', {
-          file_name: selectedFile.name,
-          file_size: selectedFile.size,
-          imported_by: user.id,
-          total_records: users.length,
-          processed_records: 0,
-          status: 'processing'
-        });
-        throw fileError;
+        console.error('❌ Erro ao registrar arquivo:', fileError);
+        console.error('Código do erro:', fileError.code);
+        console.error('Mensagem do erro:', fileError.message);
+        console.error('Detalhes do erro:', fileError.details);
+        throw new Error(`Erro ao registrar arquivo: ${fileError.message}`);
       }
 
-      console.log('Arquivo registrado com sucesso:', importFileData);
+      console.log('✅ Arquivo registrado com sucesso:', fileData);
 
-      console.log('Inserindo usuários importados...');
-      // Inserir usuários importados
+      console.log('⚙️ Etapa 3: Inserindo usuários importados...');
       const usersToInsert = users.map(user => ({
         ...user,
         status: 'active'
       }));
-
-      console.log('Dados dos usuários a serem inseridos:', usersToInsert);
+      console.log('📊 Dados dos usuários a serem inseridos:', usersToInsert);
 
       const { error: usersError, data: insertedUsers } = await supabase
         .from('imported_users_idm')
@@ -232,29 +235,32 @@ const UserImport = () => {
         .select();
 
       if (usersError) {
-        console.error('Erro ao inserir usuários:', usersError);
-        console.error('Dados que tentamos inserir:', usersToInsert);
-        throw usersError;
+        console.error('❌ Erro ao inserir usuários:', usersError);
+        console.error('Código do erro:', usersError.code);
+        console.error('Mensagem do erro:', usersError.message);
+        console.error('Detalhes do erro:', usersError.details);
+        throw new Error(`Erro ao inserir usuários: ${usersError.message}`);
       }
 
-      console.log('Usuários inseridos com sucesso:', insertedUsers);
+      console.log('✅ Usuários inseridos com sucesso:', insertedUsers?.length);
 
-      console.log('Atualizando status do arquivo...');
-      // Atualizar status do arquivo
+      console.log('⚙️ Etapa 4: Atualizando status do arquivo...');
       const { error: updateError } = await supabase
         .from('user_import_files_idm')
         .update({
           processed_records: users.length,
           status: 'completed'
         })
-        .eq('id', importFileData.id);
+        .eq('id', fileData.id);
 
       if (updateError) {
-        console.error('Erro ao atualizar status do arquivo:', updateError);
-        throw updateError;
+        console.error('❌ Erro ao atualizar status do arquivo:', updateError);
+        console.error('Código do erro:', updateError.code);
+        console.error('Mensagem do erro:', updateError.message);
+        throw new Error(`Erro ao atualizar status: ${updateError.message}`);
       }
 
-      console.log('Importação concluída com sucesso!');
+      console.log('🎉 Importação concluída com sucesso!');
       toast({
         title: "Sucesso",
         description: `${users.length} usuários importados com sucesso`,
@@ -265,11 +271,24 @@ const UserImport = () => {
       setSelectedFile(null);
 
     } catch (error) {
-      console.error('Erro durante importação (catch block):', error);
-      console.error('Stack trace:', error instanceof Error ? error.stack : 'N/A');
+      console.error('💥 ERRO DURANTE IMPORTAÇÃO:', error);
+      console.error('Tipo do erro:', typeof error);
+      console.error('Stack trace completo:', error instanceof Error ? error.stack : 'N/A');
+      
+      let errorMessage = 'Erro desconhecido';
+      if (error instanceof Error) {
+        errorMessage = error.message;
+      } else if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error && typeof error === 'object') {
+        errorMessage = JSON.stringify(error);
+      }
+      
+      console.error('Mensagem de erro final:', errorMessage);
+      
       toast({
         title: "Erro",
-        description: `Erro durante a importação: ${error instanceof Error ? error.message : 'Erro desconhecido'}`,
+        description: `Erro durante a importação: ${errorMessage}`,
         variant: "destructive"
       });
     } finally {
