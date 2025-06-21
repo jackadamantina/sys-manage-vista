@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 
 const SystemManagement = () => {
@@ -8,6 +7,7 @@ const SystemManagement = () => {
     { id: 'general', label: 'Gestão Geral' },
     { id: 'access', label: 'Gestão de Acesso' },
     { id: 'security', label: 'Segurança de Acesso' },
+    { id: 'logs', label: 'Logs' },
   ];
 
   return (
@@ -41,6 +41,7 @@ const SystemManagement = () => {
           {activeTab === 'general' && <GeneralTab />}
           {activeTab === 'access' && <AccessTab />}
           {activeTab === 'security' && <SecurityTab />}
+          {activeTab === 'logs' && <LogsTab />}
         </div>
       </div>
     </div>
@@ -105,7 +106,7 @@ const GeneralTab = () => (
         </select>
       </div>
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Acesso</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Acessível</label>
         <div className="flex space-x-4">
           <label className="flex items-center">
             <input type="radio" name="access" value="internal" className="mr-2" />
@@ -147,6 +148,21 @@ const AccessTab = () => (
         className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
         placeholder="Nome do responsável"
       />
+    </div>
+
+    <div>
+      <div className="flex items-center mb-2">
+        <label className="block text-sm font-medium text-gray-700">Complexidade de Senhas</label>
+        <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Define se o sistema aplica regras de complexidade de senhas">
+          <i className="ri-question-line"></i>
+        </div>
+      </div>
+      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+        <option value="">Selecione</option>
+        <option value="applied">Aplicado</option>
+        <option value="not-applied">Não Aplicado</option>
+        <option value="not-available">Não Possui</option>
+      </select>
     </div>
 
     <div className="mt-8">
@@ -239,20 +255,17 @@ const SecurityTab = () => (
       <div>
         <div className="flex items-center mb-2">
           <label className="block text-sm font-medium text-gray-700">SSO Disponível</label>
-          <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Indica se o sistema suporta autenticação via Single Sign-On">
+          <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Status da disponibilidade de Single Sign-On">
             <i className="ri-question-line"></i>
           </div>
         </div>
-        <div className="flex space-x-4">
-          <label className="flex items-center">
-            <input type="radio" name="sso_available" value="yes" className="mr-2" />
-            <span className="text-sm text-gray-700">Sim</span>
-          </label>
-          <label className="flex items-center">
-            <input type="radio" name="sso_available" value="no" className="mr-2" />
-            <span className="text-sm text-gray-700">Não</span>
-          </label>
-        </div>
+        <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+          <option value="">Selecione o status</option>
+          <option value="available">Disponível</option>
+          <option value="not-available">Não Disponível</option>
+          <option value="in-development">A Desenvolver</option>
+          <option value="license-upgrade">Upgrade de Licença</option>
+        </select>
       </div>
     </div>
 
@@ -288,6 +301,58 @@ const SecurityTab = () => (
           </div>
         </label>
       </div>
+    </div>
+  </form>
+);
+
+const LogsTab = () => (
+  <form className="space-y-6">
+    <div className="flex justify-between items-center mb-6">
+      <h3 className="text-lg font-medium text-gray-900">Configurações de Logs</h3>
+      <button type="button" className="px-4 py-2 bg-primary text-white rounded-button flex items-center">
+        <i className="ri-save-line mr-2"></i> Salvar
+      </button>
+    </div>
+
+    <div>
+      <div className="flex items-center mb-2">
+        <label className="block text-sm font-medium text-gray-700">Tipos de Logs</label>
+        <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Selecione os tipos de logs que deseja monitorar">
+          <i className="ri-question-line"></i>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <label className="flex items-center">
+          <input type="checkbox" name="log_types" value="system" className="mr-2" />
+          <span className="text-sm text-gray-700">Logs do Sistema</span>
+        </label>
+        <label className="flex items-center">
+          <input type="checkbox" name="log_types" value="application" className="mr-2" />
+          <span className="text-sm text-gray-700">Logs da Aplicação</span>
+        </label>
+        <label className="flex items-center">
+          <input type="checkbox" name="log_types" value="access" className="mr-2" />
+          <span className="text-sm text-gray-700">Logs de Acesso</span>
+        </label>
+      </div>
+    </div>
+
+    <div>
+      <div className="flex items-center mb-2">
+        <label className="block text-sm font-medium text-gray-700">Retenção</label>
+        <div className="w-4 h-4 ml-1 text-gray-400 cursor-help flex items-center justify-center" title="Período de retenção dos logs em dias">
+          <i className="ri-question-line"></i>
+        </div>
+      </div>
+      <select className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary">
+        <option value="">Selecione o período</option>
+        <option value="30">30 dias</option>
+        <option value="60">60 dias</option>
+        <option value="90">90 dias</option>
+        <option value="180">180 dias</option>
+        <option value="365">1 ano</option>
+        <option value="custom">Personalizado</option>
+      </select>
     </div>
   </form>
 );

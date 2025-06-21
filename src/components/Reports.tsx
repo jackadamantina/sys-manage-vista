@@ -1,7 +1,31 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 
 const Reports = () => {
+  const [queryFilters, setQueryFilters] = useState({
+    system: '',
+    responsible: '',
+    hosting: '',
+    access: '',
+    namedUsers: '',
+    sso: '',
+    integration: '',
+    logTypes: [],
+    retention: ''
+  });
+
+  const handleFilterChange = (field: string, value: any) => {
+    setQueryFilters(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const executeQuery = () => {
+    console.log('Executando query com filtros:', queryFilters);
+    // Aqui implementaria a lógica de query
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -12,6 +36,110 @@ const Reports = () => {
         </button>
       </div>
 
+      {/* Query Builder */}
+      <div className="bg-white rounded shadow p-6">
+        <div className="flex items-center mb-6">
+          <h3 className="text-lg font-semibold text-gray-800">Construtor de Consultas</h3>
+          <div className="w-4 h-4 ml-2 text-gray-400 cursor-help flex items-center justify-center" title="Use os filtros abaixo para criar consultas personalizadas">
+            <i className="ri-question-line"></i>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Sistema</label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="Nome do sistema"
+              value={queryFilters.system}
+              onChange={(e) => handleFilterChange('system', e.target.value)}
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Responsável</label>
+            <input
+              type="text"
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+              placeholder="Nome do responsável"
+              value={queryFilters.responsible}
+              onChange={(e) => handleFilterChange('responsible', e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Hosting</label>
+            <select 
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+              value={queryFilters.hosting}
+              onChange={(e) => handleFilterChange('hosting', e.target.value)}
+            >
+              <option value="">Todos</option>
+              <option value="on-premises">On-premises</option>
+              <option value="cloudstack">Cloudstack</option>
+              <option value="aws">AWS</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Acessível</label>
+            <select 
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+              value={queryFilters.access}
+              onChange={(e) => handleFilterChange('access', e.target.value)}
+            >
+              <option value="">Todos</option>
+              <option value="internal">Interno</option>
+              <option value="public">Público</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Usuários Nomeados</label>
+            <select 
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+              value={queryFilters.namedUsers}
+              onChange={(e) => handleFilterChange('namedUsers', e.target.value)}
+            >
+              <option value="">Todos</option>
+              <option value="yes">Sim</option>
+              <option value="no">Não</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">SSO Disponível</label>
+            <select 
+              className="w-full px-4 py-2 border border-gray-300 rounded focus:ring-2 focus:ring-primary focus:border-primary"
+              value={queryFilters.sso}
+              onChange={(e) => handleFilterChange('sso', e.target.value)}
+            >
+              <option value="">Todos</option>
+              <option value="available">Disponível</option>
+              <option value="not-available">Não Disponível</option>
+              <option value="in-development">A Desenvolver</option>
+              <option value="license-upgrade">Upgrade de Licença</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="flex justify-between items-center">
+          <button 
+            onClick={executeQuery}
+            className="px-6 py-2 bg-primary text-white rounded-button flex items-center"
+          >
+            <i className="ri-search-line mr-2"></i>
+            Executar Consulta
+          </button>
+          <button className="px-4 py-2 text-primary border border-primary rounded-button flex items-center hover:bg-primary hover:text-white transition-colors">
+            <i className="ri-download-line mr-2"></i>
+            Exportar Resultados
+          </button>
+        </div>
+      </div>
+
+      {/* Report Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white rounded shadow p-6">
           <div className="flex items-center mb-4">
