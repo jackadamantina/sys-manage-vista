@@ -1,8 +1,10 @@
+
 import React, { useState } from 'react';
 import UserComparison from './UserComparison';
+import UserImport from './UserImport';
 
 const Settings = () => {
-  const [activeTab, setActiveTab] = useState<'logs' | 'users'>('logs');
+  const [activeTab, setActiveTab] = useState<'logs' | 'users' | 'import'>('logs');
 
   const activityLogs = [
     {
@@ -42,6 +44,7 @@ const Settings = () => {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
+              <i className="ri-file-list-line mr-2"></i>
               Logs de Atividades
             </button>
             <button
@@ -52,7 +55,19 @@ const Settings = () => {
                   : 'text-gray-600 hover:bg-gray-100'
               }`}
             >
+              <i className="ri-file-compare-line mr-2"></i>
               Comparação de Usuários
+            </button>
+            <button
+              onClick={() => setActiveTab('import')}
+              className={`px-4 py-2 text-sm font-medium rounded-md ${
+                activeTab === 'import'
+                  ? 'bg-primary text-white'
+                  : 'text-gray-600 hover:bg-gray-100'
+              }`}
+            >
+              <i className="ri-upload-line mr-2"></i>
+              Importar Lista de Usuários
             </button>
           </div>
         </div>
@@ -149,6 +164,8 @@ const Settings = () => {
           )}
 
           {activeTab === 'users' && <UserComparison />}
+
+          {activeTab === 'import' && <UserImport />}
         </div>
       </div>
     </div>

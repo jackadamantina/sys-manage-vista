@@ -302,6 +302,53 @@ export type Database = {
         }
         Relationships: []
       }
+      user_import_files_idm: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_size: number | null
+          id: string
+          import_date: string
+          imported_by: string | null
+          processed_records: number | null
+          status: string | null
+          total_records: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_size?: number | null
+          id?: string
+          import_date?: string
+          imported_by?: string | null
+          processed_records?: number | null
+          status?: string | null
+          total_records?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_size?: number | null
+          id?: string
+          import_date?: string
+          imported_by?: string | null
+          processed_records?: number | null
+          status?: string | null
+          total_records?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_import_files_idm_imported_by_fkey"
+            columns: ["imported_by"]
+            isOneToOne: false
+            referencedRelation: "user_idm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_mfa_settings: {
         Row: {
           backup_codes: string[] | null
