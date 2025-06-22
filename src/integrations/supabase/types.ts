@@ -171,6 +171,47 @@ export type Database = {
         }
         Relationships: []
       }
+      system_users_idm: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          imported_at: string
+          name: string | null
+          system_id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          imported_at?: string
+          name?: string | null
+          system_id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          imported_at?: string
+          name?: string | null
+          system_id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_users_idm_system_id_fkey"
+            columns: ["system_id"]
+            isOneToOne: false
+            referencedRelation: "systems_idm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       systems_idm: {
         Row: {
           access_type: string | null

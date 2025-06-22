@@ -39,6 +39,15 @@ interface ImportedUser {
   imported_at: string;
 }
 
+interface SystemUserDB {
+  id: string;
+  username: string;
+  name: string | null;
+  email: string | null;
+  system_id: string;
+  imported_at: string;
+}
+
 interface ComparisonResult {
   identical: number;
   missing: number;
@@ -63,6 +72,7 @@ const Users = () => {
   const [error, setError] = useState<string | null>(null);
   const [uploadedSystemUsers, setUploadedSystemUsers] = useState<string[]>([]);
   const [importedUsers, setImportedUsers] = useState<ImportedUser[]>([]);
+  const [systemUsers, setSystemUsers] = useState<SystemUserDB[]>([]);
   const [comparisonResult, setComparisonResult] = useState<ComparisonResult | null>(null);
 
   // Load systems from Supabase
@@ -124,6 +134,26 @@ const Users = () => {
     }
   };
 
+  // Load system users from database
+  const loadSystemUsers = async (systemId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('system_users_idm')
+        .select('*')
+        .eq('system_id', systemId)
+        .order('imported_at', { ascending: false });
+
+      if (error) {
+        console.error('Erro ao carregar usuários do sistema:', error);
+        return;
+      }
+
+      setSystemUsers(data || []);
+    } catch (error) {
+      console.error('Erro ao carregar usuários do sistema:', error);
+    }
+  };
+
   useEffect(() => {
     loadSystems();
     loadImportedUsers();
@@ -143,6 +173,10 @@ const Users = () => {
     setShowComparison(false);
     setUploadedSystemUsers([]);
     setComparisonResult(null);
+    
+    if (systemId) {
+      await loadSystemUsers(systemId);
+    }
   };
 
   const handlePathChange = async (path: string) => {
@@ -215,6 +249,46 @@ const Users = () => {
       reader.onerror = () => reject(new Error('Erro ao ler arquivo'));
       reader.readAsText(file);
     });
+  };
+
+  const saveSystemUsers = async (systemId: string, users: string[]) => {
+    try {
+      // Primeiro, remove todos os usuários existentes do sistema
+      const { error: deleteError } = await supabase
+        .from('system_users_idm')
+        .delete()
+        .eq('system_id', systemId);
+
+      if (deleteError) {
+        console.error('Erro ao limpar usuários do sistema:', deleteError);
+        throw deleteError;
+      }
+
+      // Depois, insere os novos usuários
+      const systemUsersData = users.map(username => ({
+        system_id: systemId,
+        username: username,
+        name: null,
+        email: null
+      }));
+
+      const { error: insertError } = await supabase
+        .from('system_users_idm')
+        .insert(systemUsersData);
+
+      if (insertError) {
+        console.error('Erro ao inserir usuários do sistema:', insertError);
+        throw insertError;
+      }
+      
+      // Recarrega os usuários do sistema
+      await loadSystemUsers(systemId);
+      
+      console.log('Usuários do sistema salvos com sucesso');
+    } catch (error) {
+      console.error('Erro ao salvar usuários do sistema:', error);
+      throw error;
+    }
   };
 
   const compareUsers = (systemUsers: string[], importedUsers: ImportedUser[]): ComparisonResult => {
@@ -302,6 +376,9 @@ const Users = () => {
       // Parse the uploaded system file
       const systemUsers = await parseCSVFile(comparisonFile);
       setUploadedSystemUsers(systemUsers);
+      
+      // Save system users to database
+      await saveSystemUsers(selectedSystem, systemUsers);
       
       // Compare with imported users
       const result = compareUsers(systemUsers, importedUsers);
@@ -488,6 +565,26 @@ const Users = () => {
                     <i className="ri-file-compare-line mr-2"></i>
                     Comparar com Lista Importada
                   </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Show current system users if available */}
+          {selectedSystem && systemUsers.length > 0 && (
+            <div className="bg-white rounded shadow">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-gray-800">
+                  Usuários Salvos do Sistema ({systemUsers.length})
+                </h3>
+              </div>
+              <div className="p-6">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                  {systemUsers.map((user, index) => (
+                    <div key={index} className="bg-gray-50 px-3 py-2 rounded text-sm">
+                      {user.username}
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>

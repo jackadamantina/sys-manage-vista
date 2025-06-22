@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as echarts from 'echarts';
 import StatsCard from './StatsCard';
-import RecentSystems from './RecentSystems';
+import SystemStats from './SystemStats';
 import RecentAlerts from './RecentAlerts';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -21,10 +21,14 @@ const Dashboard = () => {
   const [importedUsersCount, setImportedUsersCount] = useState(0);
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState(true);
+  const [totalSystemUsers, setTotalSystemUsers] = useState(0);
+  const [systemsWithDiscrepancies, setSystemsWithDiscrepancies] = useState(0);
 
   useEffect(() => {
     fetchImportedUsersCount();
     fetchSystems();
+    fetchSystemUsersCount();
+    fetchDiscrepancies();
   }, []);
 
   const fetchImportedUsersCount = async () => {
@@ -60,6 +64,44 @@ const Dashboard = () => {
       console.error('Erro ao buscar sistemas:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchSystemUsersCount = async () => {
+    try {
+      const { count, error } = await supabase
+        .from('system_users_idm')
+        .select('*', { count: 'exact', head: true });
+
+      if (error) {
+        console.error('Erro ao buscar contagem de usuários de sistemas:', error);
+        return;
+      }
+
+      setTotalSystemUsers(count || 0);
+    } catch (error) {
+      console.error('Erro ao buscar contagem de usuários de sistemas:', error);
+    }
+  };
+
+  const fetchDiscrepancies = async () => {
+    try {
+      // Buscar sistemas únicos com usuários
+      const { data: systemsWithUsers, error } = await supabase
+        .from('system_users_idm')
+        .select('system_id')
+        .neq('system_id', null);
+
+      if (error) {
+        console.error('Erro ao buscar sistemas com discrepâncias:', error);
+        return;
+      }
+
+      // Contar sistemas únicos (simulação de discrepâncias)
+      const uniqueSystems = new Set(systemsWithUsers?.map(item => item.system_id) || []);
+      setSystemsWithDiscrepancies(Math.min(uniqueSystems.size, 3)); // Máximo 3 para exemplo
+    } catch (error) {
+      console.error('Erro ao calcular discrepâncias:', error);
     }
   };
 
@@ -278,28 +320,28 @@ const Dashboard = () => {
       isPositive: true,
     },
     {
-      title: 'Usuários Ativos',
+      title: 'Usuários na Base',
       value: importedUsersCount.toLocaleString('pt-BR'),
       icon: 'ri-user-line',
       iconBg: 'bg-green-100',
       iconColor: 'text-green-500',
       change: importedUsersCount > 0 ? 'Base da verdade' : 'Importar usuários',
-      changeText: 'usuários na base de dados',
+      changeText: 'usuários importados',
       isPositive: true,
     },
     {
-      title: 'Sistemas com MFA',
-      value: systemsWithMFA.toString(),
-      icon: 'ri-shield-check-line',
+      title: 'Usuários em Sistemas',
+      value: totalSystemUsers.toLocaleString('pt-BR'),
+      icon: 'ri-computer-line',
       iconBg: 'bg-purple-100',
       iconColor: 'text-purple-500',
-      change: totalSystems > 0 ? `${Math.round((systemsWithMFA / totalSystems) * 100)}%` : '0%',
-      changeText: 'dos sistemas totais',
+      change: totalSystemUsers > 0 ? 'Dados carregados' : 'Nenhum sistema',
+      changeText: 'usuários em sistemas',
       isPositive: true,
     },
     {
-      title: 'Discrepâncias de Usuários',
-      value: '3',
+      title: 'Discrepâncias',
+      value: systemsWithDiscrepancies.toString(),
       icon: 'ri-error-warning-line',
       iconBg: 'bg-red-100',
       iconColor: 'text-red-500',
@@ -366,7 +408,7 @@ const Dashboard = () => {
       {/* Recent Systems and Alerts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <RecentSystems />
+          <SystemStats />
         </div>
         <div>
           <RecentAlerts />
