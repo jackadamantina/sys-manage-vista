@@ -22,13 +22,11 @@ const Dashboard = () => {
   const [systems, setSystems] = useState<System[]>([]);
   const [loading, setLoading] = useState(true);
   const [totalSystemUsers, setTotalSystemUsers] = useState(0);
-  const [systemsWithDiscrepancies, setSystemsWithDiscrepancies] = useState(0);
 
   useEffect(() => {
     fetchImportedUsersCount();
     fetchSystems();
     fetchSystemUsersCount();
-    fetchDiscrepancies();
   }, []);
 
   const fetchImportedUsersCount = async () => {
@@ -81,27 +79,6 @@ const Dashboard = () => {
       setTotalSystemUsers(count || 0);
     } catch (error) {
       console.error('Erro ao buscar contagem de usuários de sistemas:', error);
-    }
-  };
-
-  const fetchDiscrepancies = async () => {
-    try {
-      // Buscar sistemas únicos com usuários
-      const { data: systemsWithUsers, error } = await supabase
-        .from('system_users_idm')
-        .select('system_id')
-        .neq('system_id', null);
-
-      if (error) {
-        console.error('Erro ao buscar sistemas com discrepâncias:', error);
-        return;
-      }
-
-      // Contar sistemas únicos (simulação de discrepâncias)
-      const uniqueSystems = new Set(systemsWithUsers?.map(item => item.system_id) || []);
-      setSystemsWithDiscrepancies(Math.min(uniqueSystems.size, 3)); // Máximo 3 para exemplo
-    } catch (error) {
-      console.error('Erro ao calcular discrepâncias:', error);
     }
   };
 
@@ -339,22 +316,12 @@ const Dashboard = () => {
       changeText: 'usuários em sistemas',
       isPositive: true,
     },
-    {
-      title: 'Discrepâncias',
-      value: systemsWithDiscrepancies.toString(),
-      icon: 'ri-error-warning-line',
-      iconBg: 'bg-red-100',
-      iconColor: 'text-red-500',
-      change: '',
-      changeText: 'sistemas precisam análise',
-      isPositive: false,
-    },
   ];
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {statsData.map((stat, index) => (
           <StatsCard key={index} {...stat} />
         ))}
@@ -365,14 +332,6 @@ const Dashboard = () => {
         <div className="bg-white rounded shadow p-5">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Distribuição de Recursos</h3>
-            <div className="flex space-x-2">
-              <button className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-full">
-                Mensal
-              </button>
-              <button className="text-xs px-3 py-1 bg-primary text-white rounded-full">
-                Anual
-              </button>
-            </div>
           </div>
           {loading ? (
             <div className="h-64 flex items-center justify-center">
@@ -386,14 +345,6 @@ const Dashboard = () => {
         <div className="bg-white rounded shadow p-5">
           <div className="flex justify-between items-center mb-4">
             <h3 className="text-lg font-semibold text-gray-800">Status de Segurança</h3>
-            <div className="flex space-x-2">
-              <button className="text-xs px-3 py-1 bg-gray-100 text-gray-600 rounded-full">
-                Trimestral
-              </button>
-              <button className="text-xs px-3 py-1 bg-primary text-white rounded-full">
-                Atual
-              </button>
-            </div>
           </div>
           {loading ? (
             <div className="h-64 flex items-center justify-center">

@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -145,10 +144,7 @@ const RecentAlerts = () => {
   return (
     <div className="bg-white rounded shadow">
       <div className="p-5 border-b border-gray-200">
-        <div className="flex justify-between items-center">
-          <h3 className="text-lg font-semibold text-gray-800">Alertas Recentes</h3>
-          <button className="text-sm text-primary hover:text-primary-dark">Ver todos</button>
-        </div>
+        <h3 className="text-lg font-semibold text-gray-800">Alertas Recentes</h3>
       </div>
       <div className="p-5 space-y-4">
         {alerts.length === 0 ? (

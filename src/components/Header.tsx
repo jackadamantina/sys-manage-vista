@@ -9,45 +9,50 @@ interface HeaderProps {
 const Header = ({ title }: HeaderProps) => {
   const [alertCount, setAlertCount] = useState(0);
 
-  // Mock data de alertas recentes - deve vir do dashboard
-  const recentAlerts = [
-    {
-      title: 'Arquivo de usuários desatualizado',
-      description: 'Sistema ERP - 7 dias sem atualização',
-      time: '21/06/2025 - 09:45',
-      date: new Date('2025-06-21T09:45:00'),
-    },
-    {
-      title: 'MFA não configurado',
-      description: 'Sistema de Helpdesk - Configuração pendente',
-      time: '20/06/2025 - 14:23',
-      date: new Date('2025-06-20T14:23:00'),
-    },
-    {
-      title: 'Usuários inativos detectados',
-      description: 'Portal de RH - 12 usuários sem atividade',
-      time: '19/06/2025 - 16:10',
-      date: new Date('2025-06-19T16:10:00'),
-    },
-    {
-      title: 'Novo sistema adicionado',
-      description: 'Sistema de Gestão de Projetos - Aguardando configuração',
-      time: '18/06/2025 - 11:35',
-      date: new Date('2025-06-18T11:35:00'),
-    },
-    {
-      title: 'Auditoria de logs concluída',
-      description: 'Sistema Financeiro - Sem irregularidades',
-      time: '17/06/2025 - 17:22',
-      date: new Date('2025-06-17T17:22:00'),
-    },
-  ];
-
   useEffect(() => {
-    // Ordenar alertas por data mais recente e definir contagem
-    const sortedAlerts = recentAlerts.sort((a, b) => b.date.getTime() - a.date.getTime());
-    setAlertCount(sortedAlerts.length);
+    fetchAlertsCount();
   }, []);
+
+  const fetchAlertsCount = async () => {
+    try {
+      const { data: systems, error } = await supabase
+        .from('systems_idm')
+        .select('id, name, mfa_configuration, password_complexity, named_users, created_at');
+
+      if (error) {
+        console.error('Erro ao buscar sistemas para alertas:', error);
+        return;
+      }
+
+      let alertsCount = 0;
+
+      systems?.forEach((system) => {
+        // Alerta para MFA não configurado
+        if (!system.mfa_configuration || system.mfa_configuration.toLowerCase().includes('desabilitado')) {
+          alertsCount++;
+        }
+
+        // Alerta para complexidade de senha não definida
+        if (!system.password_complexity) {
+          alertsCount++;
+        }
+
+        // Alerta para usuários nomeados não configurados
+        if (system.named_users === null || system.named_users === false) {
+          alertsCount++;
+        }
+      });
+
+      // Adicionar alerta informativo se houver sistemas
+      if (systems && systems.length > 0) {
+        alertsCount++; // Alerta de novo sistema
+      }
+
+      setAlertCount(Math.min(alertsCount, 99)); // Máximo 99 para exibição
+    } catch (error) {
+      console.error('Erro ao calcular alertas:', error);
+    }
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200">
