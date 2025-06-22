@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import UserImport from './UserImport';
+import ActiveSessions from './ActiveSessions';
+import AuditLogs from './AuditLogs';
 
 const Settings = () => {
   const [activeTab, setActiveTab] = useState('general');
@@ -14,11 +16,12 @@ const Settings = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="general">Geral</TabsTrigger>
           <TabsTrigger value="security">Segurança</TabsTrigger>
-          <TabsTrigger value="notifications">Notificações</TabsTrigger>
-          <TabsTrigger value="user-import">Importar Lista de Usuários</TabsTrigger>
+          <TabsTrigger value="sessions">Sessões</TabsTrigger>
+          <TabsTrigger value="audit">Logs</TabsTrigger>
+          <TabsTrigger value="user-import">Importar Usuários</TabsTrigger>
         </TabsList>
 
         <TabsContent value="general">
@@ -82,20 +85,20 @@ const Settings = () => {
                 </div>
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded">
                   <div>
-                    <h4 className="font-medium">Sessões Ativas</h4>
-                    <p className="text-sm text-gray-600">Visualize e gerencie sessões ativas</p>
+                    <h4 className="font-medium">Política de Senhas</h4>
+                    <p className="text-sm text-gray-600">Configure requisitos de senha</p>
                   </div>
                   <button className="px-4 py-2 text-primary border border-primary rounded-button">
-                    Ver Sessões
+                    Configurar
                   </button>
                 </div>
                 <div className="flex items-center justify-between p-4 border border-gray-200 rounded">
                   <div>
-                    <h4 className="font-medium">Logs de Auditoria</h4>
-                    <p className="text-sm text-gray-600">Visualize logs de atividades do sistema</p>
+                    <h4 className="font-medium">Tempo de Sessão</h4>
+                    <p className="text-sm text-gray-600">Defina tempo limite das sessões</p>
                   </div>
                   <button className="px-4 py-2 text-primary border border-primary rounded-button">
-                    Ver Logs
+                    Configurar
                   </button>
                 </div>
               </div>
@@ -103,49 +106,12 @@ const Settings = () => {
           </Card>
         </TabsContent>
 
-        <TabsContent value="notifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Configurações de Notificações</CardTitle>
-              <CardDescription>
-                Configure como e quando você deseja ser notificado
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between p-4 border border-gray-200 rounded">
-                  <div>
-                    <h4 className="font-medium">Notificações por Email</h4>
-                    <p className="text-sm text-gray-600">Receba alertas importantes por email</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" defaultChecked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between p-4 border border-gray-200 rounded">
-                  <div>
-                    <h4 className="font-medium">Notificações Push</h4>
-                    <p className="text-sm text-gray-600">Receba notificações no navegador</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
-                </div>
-                <div className="flex items-center justify-between p-4 border border-gray-200 rounded">
-                  <div>
-                    <h4 className="font-medium">Relatórios Semanais</h4>
-                    <p className="text-sm text-gray-600">Receba um resumo semanal das atividades</p>
-                  </div>
-                  <label className="relative inline-flex items-center cursor-pointer">
-                    <input type="checkbox" defaultChecked className="sr-only peer" />
-                    <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-primary/25 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
-                  </label>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+        <TabsContent value="sessions">
+          <ActiveSessions />
+        </TabsContent>
+
+        <TabsContent value="audit">
+          <AuditLogs />
         </TabsContent>
 
         <TabsContent value="user-import">

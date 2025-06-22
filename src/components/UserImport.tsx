@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,6 +31,7 @@ const UserImport = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [clearBeforeImport, setClearBeforeImport] = useState(true);
 
   // Carregar usuários importados
   const loadImportedUsers = async () => {
@@ -89,6 +89,40 @@ const UserImport = () => {
     
     loadData();
   }, []);
+
+  // Função para limpar dados existentes
+  const clearExistingData = async () => {
+    try {
+      console.log('🧹 Limpando dados existentes...');
+      
+      // Limpar usuários importados
+      const { error: usersError } = await supabase
+        .from('imported_users_idm')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      
+      if (usersError) {
+        console.error('❌ Erro ao limpar usuários:', usersError);
+        throw new Error(`Erro ao limpar usuários existentes: ${usersError.message}`);
+      }
+
+      // Limpar histórico de arquivos
+      const { error: filesError } = await supabase
+        .from('user_import_files_idm')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all records
+      
+      if (filesError) {
+        console.error('❌ Erro ao limpar histórico:', filesError);
+        throw new Error(`Erro ao limpar histórico de importações: ${filesError.message}`);
+      }
+
+      console.log('✅ Dados existentes limpos com sucesso');
+    } catch (error) {
+      console.error('💥 Erro ao limpar dados:', error);
+      throw error;
+    }
+  };
 
   // Função para processar arquivo CSV/Excel
   const processFile = (file: File): Promise<any[]> => {
@@ -183,8 +217,8 @@ const UserImport = () => {
 
     console.log('🚀 Iniciando processo de importação...');
     console.log('📁 Arquivo:', selectedFile.name, 'Tamanho:', selectedFile.size);
+    console.log('🧹 Limpar antes de importar:', clearBeforeImport);
     
-    // Verificar se o usuário está logado no contexto customizado
     if (!user || !user.id) {
       console.error('❌ Usuário não encontrado no contexto:', user);
       toast({
@@ -199,6 +233,12 @@ const UserImport = () => {
     
     setUploading(true);
     try {
+      // Etapa 0: Limpar dados existentes se solicitado
+      if (clearBeforeImport) {
+        console.log('⚙️ Etapa 0: Limpando dados existentes...');
+        await clearExistingData();
+      }
+
       console.log('⚙️ Etapa 1: Processando arquivo...');
       const users = await processFile(selectedFile);
       console.log('✅ Arquivo processado. Usuários encontrados:', users.length);
@@ -274,7 +314,7 @@ const UserImport = () => {
       console.log('🎉 Importação concluída com sucesso!');
       toast({
         title: "Sucesso",
-        description: `${users.length} usuários importados com sucesso`,
+        description: `${users.length} usuários importados com sucesso${clearBeforeImport ? ' (base limpa)' : ''}`,
       });
 
       // Recarregar dados
@@ -338,6 +378,26 @@ const UserImport = () => {
               Formatos aceitos: CSV, Excel. O arquivo deve conter colunas: Nome, Email (opcional), Usuário (opcional), Departamento (opcional)
             </p>
           </div>
+
+          {/* Opção para limpar dados existentes */}
+          <div className="flex items-center space-x-2">
+            <input
+              type="checkbox"
+              id="clearBeforeImport"
+              checked={clearBeforeImport}
+              onChange={(e) => setClearBeforeImport(e.target.checked)}
+              className="w-4 h-4 text-primary bg-gray-100 border-gray-300 rounded focus:ring-primary focus:ring-2"
+            />
+            <label htmlFor="clearBeforeImport" className="text-sm font-medium text-gray-700">
+              Limpar dados existentes antes da importação
+            </label>
+          </div>
+          <p className="text-xs text-gray-500">
+            {clearBeforeImport 
+              ? '⚠️ Todos os usuários e histórico existentes serão removidos antes da nova importação'
+              : 'Os novos dados serão adicionados aos existentes'
+            }
+          </p>
           
           {selectedFile && (
             <div className="bg-blue-50 border border-blue-200 rounded p-3">
@@ -361,7 +421,7 @@ const UserImport = () => {
               ) : (
                 <>
                   <i className="ri-upload-line mr-2"></i>
-                  Importar Usuários
+                  {clearBeforeImport ? 'Limpar e Importar' : 'Importar Usuários'}
                 </>
               )}
             </button>
