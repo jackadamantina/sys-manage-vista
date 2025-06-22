@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -32,23 +31,6 @@ const UserImport = () => {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-
-  // Autenticar no Supabase com usuário anônimo se necessário
-  const ensureSupabaseAuth = async () => {
-    try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.log('🔐 Criando sessão anônima no Supabase...');
-        // Usar signInAnonymously se disponível, caso contrário usar método alternativo
-        const { error } = await supabase.auth.signInAnonymously();
-        if (error) {
-          console.log('ℹ️ SignInAnonymously não disponível, continuando sem sessão específica');
-        }
-      }
-    } catch (error) {
-      console.log('ℹ️ Método de autenticação anônima não disponível, continuando');
-    }
-  };
 
   // Carregar usuários importados
   const loadImportedUsers = async () => {
@@ -99,7 +81,6 @@ const UserImport = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      await ensureSupabaseAuth();
       await Promise.all([loadImportedUsers(), loadImportFiles()]);
       setLoading(false);
     };
@@ -107,7 +88,7 @@ const UserImport = () => {
     loadData();
   }, []);
 
-  // Função corrigida para processar arquivo CSV/Excel
+  // Função para processar arquivo CSV/Excel
   const processFile = (file: File): Promise<any[]> => {
     return new Promise((resolve, reject) => {
       console.log('🔄 Iniciando processamento do arquivo:', file.name);
@@ -216,9 +197,6 @@ const UserImport = () => {
     
     setUploading(true);
     try {
-      // Garantir autenticação no Supabase
-      await ensureSupabaseAuth();
-
       console.log('⚙️ Etapa 1: Processando arquivo...');
       const users = await processFile(selectedFile);
       console.log('✅ Arquivo processado. Usuários encontrados:', users.length);
@@ -244,7 +222,7 @@ const UserImport = () => {
       };
       console.log('📋 Dados do arquivo a serem inseridos:', importFileData);
 
-      // Tentar inserir diretamente
+      // Inserir arquivo de importação
       const { data: fileData, error: fileError } = await supabase
         .from('user_import_files_idm')
         .insert([importFileData])
