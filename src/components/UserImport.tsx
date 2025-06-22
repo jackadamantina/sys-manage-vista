@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
@@ -52,6 +53,7 @@ const UserImport = () => {
       }
 
       console.log('✅ Usuários importados carregados:', data?.length || 0);
+      console.log('📊 Dados dos usuários:', data);
       setImportedUsers(data || []);
     } catch (error) {
       console.error('💥 Erro inesperado ao carregar usuários importados:', error);
