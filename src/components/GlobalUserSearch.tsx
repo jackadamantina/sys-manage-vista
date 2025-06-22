@@ -31,42 +31,6 @@ const GlobalUserSearch = () => {
   const [hasSearched, setHasSearched] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Mock data para demonstração - dados dos usuários por sistema
-  const systemUsersData = [
-    {
-      systemId: '1',
-      systemName: 'Sistema ERP',
-      filePath: '/data/systems/erp/users.csv',
-      users: [
-        { id: 1, name: 'Ricardo Oliveira', email: 'ricardo@empresa.com.br', department: 'TI' },
-        { id: 2, name: 'Fernanda Costa', email: 'fernanda@empresa.com.br', department: 'Vendas' },
-        { id: 3, name: 'Carlos Silva', email: 'carlos@empresa.com.br', department: 'RH' },
-        { id: 4, name: 'Rodrigo Santos', email: 'rodrigo@empresa.com.br', department: 'Financeiro' },
-      ]
-    },
-    {
-      systemId: '2',
-      systemName: 'CRM',
-      filePath: '/data/systems/crm/user_list.json',
-      users: [
-        { id: 1, name: 'Fernanda Costa', email: 'fernanda@empresa.com.br', role: 'Manager' },
-        { id: 2, name: 'Amanda Rodrigues', email: 'amanda@empresa.com.br', role: 'Sales' },
-        { id: 3, name: 'João Santos', email: 'joao@empresa.com.br', role: 'Support' },
-        { id: 4, name: 'Pedro Rodriguez', email: 'pedro@empresa.com.br', role: 'Admin' },
-      ]
-    },
-    {
-      systemId: '3',
-      systemName: 'Sistema de Ponto',
-      filePath: '/data/systems/timetrack/employees.xml',
-      users: [
-        { id: 1, name: 'Maria Rodriguez', email: 'maria.rodriguez@empresa.com.br', sector: 'Produção' },
-        { id: 2, name: 'José Rodrigues', email: 'jose.rodrigues@empresa.com.br', sector: 'Logística' },
-        { id: 3, name: 'Ana Clara', email: 'ana@empresa.com.br', sector: 'Qualidade' },
-      ]
-    }
-  ];
-
   const loadSystems = async () => {
     try {
       console.log('Carregando sistemas para busca global...');
@@ -110,19 +74,99 @@ const GlobalUserSearch = () => {
     setHasSearched(true);
     
     try {
-      // Simular busca nos arquivos dos sistemas
+      console.log('Iniciando busca por:', searchTerm);
       const results: SearchResult[] = [];
       const searchLower = searchTerm.toLowerCase();
 
-      systemUsersData.forEach(systemData => {
+      // Buscar em usuários importados gerais
+      const { data: importedUsers, error: importedError } = await supabase
+        .from('imported_users_idm')
+        .select('*');
+
+      if (importedError) {
+        console.error('Erro ao buscar usuários importados:', importedError);
+        throw importedError;
+      }
+
+      console.log('Usuários importados encontrados:', importedUsers?.length || 0);
+
+      // Processar usuários importados gerais
+      if (importedUsers && importedUsers.length > 0) {
+        const generalMatches: { field: string; value: string; matchedText: string; }[] = [];
+
+        importedUsers.forEach(user => {
+          // Buscar em todos os campos do usuário
+          Object.entries(user).forEach(([field, value]) => {
+            if (typeof value === 'string' && value.toLowerCase().includes(searchLower)) {
+              generalMatches.push({
+                field: field === 'name' ? 'Nome' : 
+                       field === 'email' ? 'Email' : 
+                       field === 'username' ? 'Usuário' : 
+                       field === 'department' ? 'Departamento' : field,
+                value: value,
+                matchedText: value
+              });
+            }
+          });
+        });
+
+        if (generalMatches.length > 0) {
+          results.push({
+            systemId: 'general',
+            systemName: 'Usuários Importados (Geral)',
+            filePath: '/data/imported_users/general.csv',
+            matches: generalMatches
+          });
+        }
+      }
+
+      // Buscar em usuários específicos de sistemas
+      const { data: systemUsers, error: systemUsersError } = await supabase
+        .from('system_users_idm')
+        .select(`
+          *,
+          systems_idm!inner(name)
+        `);
+
+      if (systemUsersError) {
+        console.error('Erro ao buscar usuários de sistemas:', systemUsersError);
+        throw systemUsersError;
+      }
+
+      console.log('Usuários de sistemas encontrados:', systemUsers?.length || 0);
+
+      // Agrupar usuários por sistema
+      const usersBySystem = systemUsers?.reduce((acc, user) => {
+        const systemId = user.system_id;
+        const systemName = user.systems_idm?.name || 'Sistema Desconhecido';
+        
+        if (!acc[systemId]) {
+          acc[systemId] = {
+            systemName,
+            users: []
+          };
+        }
+        acc[systemId].users.push(user);
+        return acc;
+      }, {} as Record<string, { systemName: string; users: any[] }>) || {};
+
+      // Processar usuários de cada sistema
+      Object.entries(usersBySystem).forEach(([systemId, systemData]) => {
         const matches: { field: string; value: string; matchedText: string; }[] = [];
 
         systemData.users.forEach(user => {
           // Buscar em todos os campos do usuário
           Object.entries(user).forEach(([field, value]) => {
             if (typeof value === 'string' && value.toLowerCase().includes(searchLower)) {
+              // Pular campos internos
+              if (['id', 'system_id', 'created_at', 'updated_at', 'imported_at'].includes(field)) {
+                return;
+              }
+              
               matches.push({
-                field: field,
+                field: field === 'name' ? 'Nome' : 
+                       field === 'email' ? 'Email' : 
+                       field === 'username' ? 'Usuário' : field,
                 value: value,
                 matchedText: value
               });
@@ -132,14 +176,15 @@ const GlobalUserSearch = () => {
 
         if (matches.length > 0) {
           results.push({
-            systemId: systemData.systemId,
+            systemId: systemId,
             systemName: systemData.systemName,
-            filePath: systemData.filePath,
+            filePath: `/data/systems/${systemData.systemName.toLowerCase().replace(/\s+/g, '_')}/users.csv`,
             matches: matches
           });
         }
       });
 
+      console.log('Resultados da busca:', results);
       setSearchResults(results);
 
       toast({
@@ -266,7 +311,7 @@ const GlobalUserSearch = () => {
                 <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
                 <p className="text-gray-500">Nenhum usuário encontrado com os termos buscados</p>
                 <p className="text-sm text-gray-400 mt-2">
-                  Tente usar termos diferentes ou verifique se há sistemas configurados
+                  Tente usar termos diferentes ou verifique se há usuários importados
                 </p>
               </div>
             ) : (
@@ -325,10 +370,10 @@ const GlobalUserSearch = () => {
               </h3>
               <div className="mt-2 text-sm text-blue-700">
                 <ul className="list-disc pl-5 space-y-1">
-                  <li>Digite qualquer termo (nome, email, departamento, etc.)</li>
-                  <li>A busca será feita em todos os sistemas configurados</li>
+                  <li>Digite qualquer termo (nome, email, usuário, etc.)</li>
+                  <li>A busca será feita em todos os usuários importados</li>
                   <li>Os resultados mostrarão onde cada correspondência foi encontrada</li>
-                  <li>Use termos parciais (ex: "rodr" para encontrar "Rodrigo", "Rodriguez", etc.)</li>
+                  <li>Use termos parciais (ex: "joão" para encontrar "João Silva", etc.)</li>
                 </ul>
               </div>
             </div>
