@@ -1,20 +1,19 @@
 
-import React from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { System } from '@/types/system';
 import { convertSystemToCSVData, convertToCSV, downloadCSV } from '@/utils/csvExport';
 
-interface ReportActionsProps {
+interface UseReportActionsProps {
   systems: System[];
   filteredSystems: System[];
   queryExecuted: boolean;
 }
 
-const ReportActions: React.FC<ReportActionsProps> = ({
+export const useReportActions = ({
   systems,
   filteredSystems,
   queryExecuted
-}) => {
+}: UseReportActionsProps) => {
   const { toast } = useToast();
 
   const generateCompleteReport = () => {
@@ -56,5 +55,3 @@ const ReportActions: React.FC<ReportActionsProps> = ({
     exportResultsToCSV
   };
 };
-
-export default ReportActions;

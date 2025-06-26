@@ -2,10 +2,10 @@
 import React from 'react';
 import { useVersioning } from '../hooks/useVersioning';
 import { useReports } from '../hooks/useReports';
+import { useReportActions } from '../hooks/useReportActions';
 import VersionInfoComponent from './VersionInfo';
 import QueryBuilder from './QueryBuilder';
 import SystemsTable from './SystemsTable';
-import ReportActions from './ReportActions';
 
 const Reports = () => {
   const { currentVersion } = useVersioning();
@@ -22,7 +22,7 @@ const Reports = () => {
     clearFilters
   } = useReports();
 
-  const reportActions = ReportActions({
+  const { generateCompleteReport, exportResultsToCSV } = useReportActions({
     systems,
     filteredSystems,
     queryExecuted
@@ -35,7 +35,7 @@ const Reports = () => {
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-800">Relatórios</h2>
         <button 
-          onClick={reportActions.generateCompleteReport}
+          onClick={generateCompleteReport}
           className="px-4 py-2 bg-primary text-white rounded-button flex items-center"
         >
           <i className="ri-file-chart-line mr-2"></i>
@@ -74,7 +74,7 @@ const Reports = () => {
         onFilterChange={handleFilterChange}
         onExecuteQuery={executeQuery}
         onClearFilters={clearFilters}
-        onExportResults={reportActions.exportResultsToCSV}
+        onExportResults={exportResultsToCSV}
       />
 
       <SystemsTable
