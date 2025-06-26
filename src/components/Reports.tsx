@@ -15,6 +15,21 @@ interface System {
   access_type: string | null;
   responsible: string | null;
   sso_configuration: string | null;
+  user_management_responsible: string | null;
+  password_complexity: string | null;
+  onboarding_type: string | null;
+  offboarding_type: string | null;
+  offboarding_priority: string | null;
+  named_users: boolean | null;
+  integration_type: string | null;
+  region_blocking: string | null;
+  mfa_configuration: string | null;
+  mfa_policy: string | null;
+  mfa_sms_policy: string | null;
+  logs_status: string | null;
+  log_types: any;
+  version: string | null;
+  integrated_users: boolean | null;
 }
 
 const Reports = () => {
@@ -164,13 +179,139 @@ const Reports = () => {
     setQueryExecuted(false);
   };
 
+  const generateCompleteReport = () => {
+    console.log('Gerando relatório completo com todos os campos...');
+    
+    const reportData = systems.map(system => ({
+      'Nome do Sistema': system.name,
+      'Descrição': system.description || '',
+      'URL': system.url || '',
+      'Hosting': system.hosting || '',
+      'Tipo de Acesso': system.access_type || '',
+      'Responsável': system.responsible || '',
+      'Responsável pela Gestão de Usuários': system.user_management_responsible || '',
+      'Complexidade de Senha': system.password_complexity || '',
+      'Tipo de Onboarding': system.onboarding_type || '',
+      'Tipo de Offboarding': system.offboarding_type || '',
+      'Prioridade de Offboarding': system.offboarding_priority || '',
+      'Usuários Nomeados': system.named_users ? 'Sim' : 'Não',
+      'Configuração SSO': system.sso_configuration || '',
+      'Tipo de Integração': system.integration_type || '',
+      'Bloqueio Regional': system.region_blocking || '',
+      'Configuração MFA': system.mfa_configuration || '',
+      'Política MFA': system.mfa_policy || '',
+      'Política MFA SMS': system.mfa_sms_policy || '',
+      'Status dos Logs': system.logs_status || '',
+      'Tipos de Log': system.log_types ? JSON.stringify(system.log_types) : '',
+      'Usuários Integrados': system.integrated_users ? 'Sim' : 'Não',
+      'Versão': system.version || '',
+      'Data de Cadastro': new Date(system.created_at).toLocaleDateString('pt-BR')
+    }));
+
+    // Gerar e baixar CSV
+    const csvContent = convertToCSV(reportData);
+    downloadCSV(csvContent, `relatorio_completo_sistemas_${new Date().toISOString().split('T')[0]}.csv`);
+
+    toast({
+      title: "Relatório Gerado",
+      description: `Relatório completo com ${reportData.length} sistema(s) foi gerado e baixado`,
+    });
+  };
+
+  const exportResultsToCSV = () => {
+    console.log('Exportando resultados para CSV...');
+    
+    const dataToExport = queryExecuted ? filteredSystems : systems;
+    
+    const exportData = dataToExport.map(system => ({
+      'Nome do Sistema': system.name,
+      'Descrição': system.description || '',
+      'URL': system.url || '',
+      'Hosting': system.hosting || '',
+      'Tipo de Acesso': system.access_type || '',
+      'Responsável': system.responsible || '',
+      'Responsável pela Gestão de Usuários': system.user_management_responsible || '',
+      'Complexidade de Senha': system.password_complexity || '',
+      'Tipo de Onboarding': system.onboarding_type || '',
+      'Tipo de Offboarding': system.offboarding_type || '',
+      'Prioridade de Offboarding': system.offboarding_priority || '',
+      'Usuários Nomeados': system.named_users ? 'Sim' : 'Não',
+      'Configuração SSO': system.sso_configuration || '',
+      'Tipo de Integração': system.integration_type || '',
+      'Bloqueio Regional': system.region_blocking || '',
+      'Configuração MFA': system.mfa_configuration || '',
+      'Política MFA': system.mfa_policy || '',
+      'Política MFA SMS': system.mfa_sms_policy || '',
+      'Status dos Logs': system.logs_status || '',
+      'Tipos de Log': system.log_types ? JSON.stringify(system.log_types) : '',
+      'Usuários Integrados': system.integrated_users ? 'Sim' : 'Não',
+      'Versão': system.version || '',
+      'Data de Cadastro': new Date(system.created_at).toLocaleDateString('pt-BR')
+    }));
+
+    const csvContent = convertToCSV(exportData);
+    const fileName = queryExecuted 
+      ? `resultados_consulta_${new Date().toISOString().split('T')[0]}.csv`
+      : `todos_sistemas_${new Date().toISOString().split('T')[0]}.csv`;
+    
+    downloadCSV(csvContent, fileName);
+
+    toast({
+      title: "Dados Exportados",
+      description: `${exportData.length} sistema(s) exportado(s) para CSV`,
+    });
+  };
+
+  const convertToCSV = (data: any[]) => {
+    if (data.length === 0) return '';
+
+    const headers = Object.keys(data[0]);
+    const csvRows = [];
+
+    // Adicionar cabeçalhos
+    csvRows.push(headers.join(','));
+
+    // Adicionar dados
+    for (const row of data) {
+      const values = headers.map(header => {
+        const value = row[header];
+        // Escapar aspas duplas e envolver em aspas se necessário
+        if (typeof value === 'string' && (value.includes(',') || value.includes('"') || value.includes('\n'))) {
+          return `"${value.replace(/"/g, '""')}"`;
+        }
+        return value;
+      });
+      csvRows.push(values.join(','));
+    }
+
+    return csvRows.join('\n');
+  };
+
+  const downloadCSV = (csvContent: string, filename: string) => {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', filename);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  };
+
   const systemsToDisplay = queryExecuted ? filteredSystems : systems;
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h2 className="text-2xl font-semibold text-gray-800">Relatórios</h2>
-        <button className="px-4 py-2 bg-primary text-white rounded-button flex items-center">
+        <button 
+          onClick={generateCompleteReport}
+          className="px-4 py-2 bg-primary text-white rounded-button flex items-center"
+        >
           <i className="ri-file-chart-line mr-2"></i>
           Gerar Relatório
         </button>
@@ -336,7 +477,10 @@ const Reports = () => {
               Limpar Filtros
             </button>
           </div>
-          <button className="px-4 py-2 text-primary border border-primary rounded-button flex items-center hover:bg-primary hover:text-white transition-colors">
+          <button 
+            onClick={exportResultsToCSV}
+            className="px-4 py-2 text-primary border border-primary rounded-button flex items-center hover:bg-primary hover:text-white transition-colors"
+          >
             <i className="ri-download-line mr-2"></i>
             Exportar Resultados
           </button>
