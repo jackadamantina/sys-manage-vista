@@ -171,6 +171,36 @@ export type Database = {
         }
         Relationships: []
       }
+      organization_settings: {
+        Row: {
+          created_at: string
+          id: string
+          organization_name: string
+          password_policy: Json | null
+          session_timeout_minutes: number | null
+          timezone: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          organization_name?: string
+          password_policy?: Json | null
+          session_timeout_minutes?: number | null
+          timezone?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          organization_name?: string
+          password_policy?: Json | null
+          session_timeout_minutes?: number | null
+          timezone?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_users_idm: {
         Row: {
           created_at: string
@@ -307,6 +337,35 @@ export type Database = {
           },
         ]
       }
+      temp_mfa_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          expires_at: string
+          user_id: string
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          expires_at: string
+          user_id: string
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          expires_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "temp_mfa_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "user_idm"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_idm: {
         Row: {
           created_at: string
@@ -395,7 +454,10 @@ export type Database = {
           backup_codes: string[] | null
           created_at: string
           id: string
+          is_verified: boolean | null
           mfa_enabled: boolean
+          mfa_type: string | null
+          phone_number: string | null
           secret_key: string | null
           updated_at: string
           user_id: string
@@ -404,7 +466,10 @@ export type Database = {
           backup_codes?: string[] | null
           created_at?: string
           id?: string
+          is_verified?: boolean | null
           mfa_enabled?: boolean
+          mfa_type?: string | null
+          phone_number?: string | null
           secret_key?: string | null
           updated_at?: string
           user_id: string
@@ -413,7 +478,10 @@ export type Database = {
           backup_codes?: string[] | null
           created_at?: string
           id?: string
+          is_verified?: boolean | null
           mfa_enabled?: boolean
+          mfa_type?: string | null
+          phone_number?: string | null
           secret_key?: string | null
           updated_at?: string
           user_id?: string
@@ -470,6 +538,17 @@ export type Database = {
           username: string
           role: string
           success: boolean
+        }[]
+      }
+      generate_mfa_code: {
+        Args: { p_user_id: string }
+        Returns: string
+      }
+      validate_password_policy: {
+        Args: { p_password: string }
+        Returns: {
+          is_valid: boolean
+          errors: string[]
         }[]
       }
     }

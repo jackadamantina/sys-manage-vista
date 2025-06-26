@@ -82,8 +82,31 @@ const Dashboard = () => {
     }
   };
 
-  // Calculate statistics from real data
+  // Calculate statistics from real data - UPDATED
   const totalSystems = systems.length;
+  
+  // Sistemas COM problemas de segurança (para mostrar percentuais de problemas)
+  const systemsWithoutMFA = systems.filter(system => 
+    !system.mfa_configuration || 
+    system.mfa_configuration.toLowerCase().includes('desabilitado') ||
+    system.mfa_configuration.toLowerCase().includes('não configurado')
+  ).length;
+
+  const systemsWithoutSSO = systems.filter(system => 
+    !system.sso_configuration || 
+    system.sso_configuration.toLowerCase() !== 'habilitado'
+  ).length;
+
+  const systemsWithoutPasswordComplexity = systems.filter(system => 
+    !system.password_complexity || 
+    system.password_complexity.toLowerCase().includes('não definida')
+  ).length;
+
+  const systemsWithoutNamedUsers = systems.filter(system => 
+    system.named_users === null || system.named_users === false
+  ).length;
+
+  // Sistemas com configurações adequadas (para gráficos positivos)
   const systemsWithMFA = systems.filter(system => 
     system.mfa_configuration && system.mfa_configuration.toLowerCase().includes('ativo')
   ).length;
@@ -211,7 +234,7 @@ const Dashboard = () => {
       resourceChart.setOption(resourceOption);
     }
 
-    // Security Status Chart - based on real system data
+    // Security Status Chart - UPDATED to show security issues percentages
     if (securityChartRef.current) {
       const securityChart = echarts.init(securityChartRef.current);
       const securityOption = {
@@ -220,35 +243,60 @@ const Dashboard = () => {
           trigger: 'item',
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
           textStyle: { color: '#1f2937' },
-          formatter: '{a} <br/>{b}: {c} ({d}%)'
+          formatter: function(params: any) {
+            const percentage = totalSystems > 0 ? ((params.value / totalSystems) * 100).toFixed(1) : '0';
+            return `${params.seriesName}<br/>${params.name}: ${params.value} (${percentage}%)`;
+          }
         },
         legend: {
           orient: 'vertical',
           right: 10,
           top: 'center',
-          data: ['MFA Ativo', 'SSO Configurado', 'Logs Ativos', 'Offboarding Automático']
+          data: ['MFA Desabilitado', 'SSO Não Habilitado', 'Sem Complexidade de Senha', 'Sem Usuários Nomeados']
         },
         series: [{
-          name: 'Status de Segurança',
+          name: 'Problemas de Segurança',
           type: 'pie',
           radius: ['40%', '70%'],
           center: ['40%', '50%'],
           avoidLabelOverlap: false,
           itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
-          label: { show: false, position: 'center' },
+          label: { 
+            show: true,
+            formatter: function(params: any) {
+              const percentage = totalSystems > 0 ? ((params.value / totalSystems) * 100).toFixed(1) : '0';
+              return `${percentage}%`;
+            }
+          },
           emphasis: { label: { show: true, fontSize: '14', fontWeight: 'bold' } },
           labelLine: { show: false },
           data: [
-            { value: systemsWithMFA, name: 'MFA Ativo', itemStyle: { color: 'rgba(87, 181, 231, 1)' } },
-            { value: systemsWithSSO, name: 'SSO Configurado', itemStyle: { color: 'rgba(141, 211, 199, 1)' } },
-            { value: systemsWithLogs, name: 'Logs Ativos', itemStyle: { color: 'rgba(251, 191, 114, 1)' } },
-            { value: systemsWithAutoOffboarding, name: 'Offboarding Automático', itemStyle: { color: 'rgba(252, 141, 98, 1)' } }
+            { 
+              value: systemsWithoutMFA, 
+              name: 'MFA Desabilitado', 
+              itemStyle: { color: 'rgba(239, 68, 68, 1)' } 
+            },
+            { 
+              value: systemsWithoutSSO, 
+              name: 'SSO Não Habilitado', 
+              itemStyle: { color: 'rgba(245, 158, 11, 1)' } 
+            },
+            { 
+              value: systemsWithoutPasswordComplexity, 
+              name: 'Sem Complexidade de Senha', 
+              itemStyle: { color: 'rgba(249, 115, 22, 1)' } 
+            },
+            { 
+              value: systemsWithoutNamedUsers, 
+              name: 'Sem Usuários Nomeados', 
+              itemStyle: { color: 'rgba(156, 163, 175, 1)' } 
+            }
           ]
         }]
       };
       securityChart.setOption(securityOption);
     }
-  }, [systems, loading]);
+  }, [systems, loading, totalSystems, systemsWithoutMFA, systemsWithoutSSO, systemsWithoutPasswordComplexity, systemsWithoutNamedUsers]);
 
   const generateMonthlySystemData = (systems: System[]) => {
     const currentYear = new Date().getFullYear();
@@ -344,7 +392,10 @@ const Dashboard = () => {
 
         <div className="bg-white rounded shadow p-5">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-gray-800">Status de Segurança</h3>
+            <h3 className="text-lg font-semibold text-gray-800">Problemas de Segurança</h3>
+            <div className="text-sm text-gray-600">
+              Total de sistemas: {totalSystems}
+            </div>
           </div>
           {loading ? (
             <div className="h-64 flex items-center justify-center">
