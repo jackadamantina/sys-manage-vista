@@ -42,7 +42,7 @@ export const useOrganizationSettings = () => {
         ...data,
         password_policy: typeof data.password_policy === 'string' 
           ? JSON.parse(data.password_policy) 
-          : data.password_policy as PasswordPolicy
+          : data.password_policy as unknown as PasswordPolicy
       };
 
       setSettings(parsedSettings);
@@ -55,9 +55,17 @@ export const useOrganizationSettings = () => {
 
   const updateSettings = async (updatedSettings: Partial<OrganizationSettings>) => {
     try {
+      // Convert PasswordPolicy back to JSON for database storage
+      const dbSettings = {
+        ...updatedSettings,
+        ...(updatedSettings.password_policy && {
+          password_policy: updatedSettings.password_policy as any
+        })
+      };
+
       const { error } = await supabase
         .from('organization_settings')
-        .update(updatedSettings)
+        .update(dbSettings)
         .eq('id', settings?.id);
 
       if (error) {
