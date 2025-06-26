@@ -3,18 +3,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
+interface PasswordPolicy {
+  min_length: number;
+  require_uppercase: boolean;
+  require_lowercase: boolean;
+  require_numbers: boolean;
+  require_special_chars: boolean;
+  expiry_days: number;
+}
+
 interface OrganizationSettings {
   id: string;
   organization_name: string;
   timezone: string;
-  password_policy: {
-    min_length: number;
-    require_uppercase: boolean;
-    require_lowercase: boolean;
-    require_numbers: boolean;
-    require_special_chars: boolean;
-    expiry_days: number;
-  };
+  password_policy: PasswordPolicy;
   session_timeout_minutes: number;
 }
 
@@ -35,7 +37,15 @@ export const useOrganizationSettings = () => {
         return;
       }
 
-      setSettings(data);
+      // Converter Json para PasswordPolicy
+      const parsedSettings: OrganizationSettings = {
+        ...data,
+        password_policy: typeof data.password_policy === 'string' 
+          ? JSON.parse(data.password_policy) 
+          : data.password_policy as PasswordPolicy
+      };
+
+      setSettings(parsedSettings);
     } catch (error) {
       console.error('Erro ao buscar configurações:', error);
     } finally {

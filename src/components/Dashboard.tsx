@@ -12,6 +12,8 @@ interface System {
   sso_configuration: string | null;
   logs_status: string | null;
   offboarding_type: string | null;
+  password_complexity: string | null;
+  named_users: boolean | null;
   created_at: string;
 }
 
@@ -50,7 +52,7 @@ const Dashboard = () => {
     try {
       const { data, error } = await supabase
         .from('systems_idm')
-        .select('id, name, mfa_configuration, sso_configuration, logs_status, offboarding_type, created_at');
+        .select('id, name, mfa_configuration, sso_configuration, logs_status, offboarding_type, password_complexity, named_users, created_at');
 
       if (error) {
         console.error('Erro ao buscar sistemas:', error);
