@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { System, QueryFilters } from '@/types/system';
 
@@ -28,35 +27,20 @@ export const useReports = () => {
 
   const loadSystems = async () => {
     try {
-      console.log('Carregando sistemas para relatórios...');
+      console.log('Loading systems for reports...');
       setLoading(true);
       setError(null);
       
-      const { data, error } = await supabase
-        .from('systems_idm')
-        .select('*')
-        .order('created_at', { ascending: false });
+      const data = await apiClient.getSystems();
 
-      console.log('Sistemas carregados para relatórios:', { data, error });
-
-      if (error) {
-        console.error('Erro ao carregar sistemas:', error);
-        setError(`Erro ao carregar sistemas: ${error.message}`);
-        toast({
-          title: "Erro",
-          description: `Erro ao carregar sistemas: ${error.message}`,
-          variant: "destructive"
-        });
-        return;
-      }
-
+      console.log('Systems loaded for reports:', data);
       setSystems(data || []);
       if (!queryExecuted) {
         setFilteredSystems(data || []);
       }
-    } catch (error) {
-      console.error('Erro ao carregar sistemas:', error);
-      const errorMessage = 'Erro inesperado ao carregar sistemas';
+    } catch (error: any) {
+      console.error('Error loading systems:', error);
+      const errorMessage = error.message || 'Unexpected error loading systems';
       setError(errorMessage);
       toast({
         title: "Erro",
@@ -76,7 +60,7 @@ export const useReports = () => {
   };
 
   const executeQuery = () => {
-    console.log('Executando query com filtros:', queryFilters);
+    console.log('Executing query with filters:', queryFilters);
     
     let filtered = [...systems];
 

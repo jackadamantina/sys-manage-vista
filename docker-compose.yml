@@ -1,0 +1,63 @@
+
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: idm-postgres
+    environment:
+      POSTGRES_DB: idm_database
+      POSTGRES_USER: idm_user
+      POSTGRES_PASSWORD: idm_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/src/database/migrations.sql:/docker-entrypoint-initdb.d/01-init.sql
+    ports:
+      - "5432:5432"
+    networks:
+      - idm-network
+    restart: unless-stopped
+
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: idm-backend
+    environment:
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_USER=idm_user
+      - DB_PASSWORD=idm_password
+      - DB_NAME=idm_database
+      - JWT_SECRET=idm-super-secret-jwt-key-2024
+      - FRONTEND_URL=http://localhost:8084
+      - NODE_ENV=production
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+    networks:
+      - idm-network
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: idm-frontend
+    environment:
+      - VITE_API_URL=http://localhost:3001/api
+    ports:
+      - "8084:80"
+    depends_on:
+      - backend
+    networks:
+      - idm-network
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+
+networks:
+  idm-network:
+    driver: bridge

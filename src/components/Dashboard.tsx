@@ -3,7 +3,7 @@ import * as echarts from 'echarts';
 import StatsCard from './StatsCard';
 import SystemStats from './SystemStats';
 import RecentAlerts from './RecentAlerts';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 
 interface System {
   id: string;
@@ -33,35 +33,19 @@ const Dashboard = () => {
 
   const fetchImportedUsersCount = async () => {
     try {
-      const { count, error } = await supabase
-        .from('imported_users_idm')
-        .select('*', { count: 'exact', head: true });
-
-      if (error) {
-        console.error('Erro ao buscar contagem de usuários importados:', error);
-        return;
-      }
-
-      setImportedUsersCount(count || 0);
+      const response = await apiClient.getImportedUsersCount();
+      setImportedUsersCount(response.count || 0);
     } catch (error) {
-      console.error('Erro ao buscar contagem de usuários importados:', error);
+      console.error('Error fetching imported users count:', error);
     }
   };
 
   const fetchSystems = async () => {
     try {
-      const { data, error } = await supabase
-        .from('systems_idm')
-        .select('id, name, mfa_configuration, sso_configuration, logs_status, offboarding_type, password_complexity, named_users, created_at');
-
-      if (error) {
-        console.error('Erro ao buscar sistemas:', error);
-        return;
-      }
-
+      const data = await apiClient.getSystems();
       setSystems(data || []);
     } catch (error) {
-      console.error('Erro ao buscar sistemas:', error);
+      console.error('Error fetching systems:', error);
     } finally {
       setLoading(false);
     }
@@ -69,25 +53,17 @@ const Dashboard = () => {
 
   const fetchSystemUsersCount = async () => {
     try {
-      const { count, error } = await supabase
-        .from('system_users_idm')
-        .select('*', { count: 'exact', head: true });
-
-      if (error) {
-        console.error('Erro ao buscar contagem de usuários de sistemas:', error);
-        return;
-      }
-
-      setTotalSystemUsers(count || 0);
+      const response = await apiClient.getSystemUsersCount();
+      setTotalSystemUsers(response.count || 0);
     } catch (error) {
-      console.error('Erro ao buscar contagem de usuários de sistemas:', error);
+      console.error('Error fetching system users count:', error);
     }
   };
 
-  // Calculate statistics from real data - UPDATED
+  // Calculate statistics from real data
   const totalSystems = systems.length;
   
-  // Sistemas COM problemas de segurança (para mostrar percentuais de problemas)
+  // Systems WITH security problems (to show problem percentages)
   const systemsWithoutMFA = systems.filter(system => 
     !system.mfa_configuration || 
     system.mfa_configuration.toLowerCase().includes('desabilitado') ||
@@ -108,7 +84,7 @@ const Dashboard = () => {
     system.named_users === null || system.named_users === false
   ).length;
 
-  // Sistemas com configurações adequadas (para gráficos positivos)
+  // Systems with adequate configurations (for positive charts)
   const systemsWithMFA = systems.filter(system => 
     system.mfa_configuration && system.mfa_configuration.toLowerCase().includes('ativo')
   ).length;

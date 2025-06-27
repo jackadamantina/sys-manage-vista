@@ -1,6 +1,6 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface User {
@@ -38,14 +38,17 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Verificar se há usuário logado no localStorage
+    // Check if user is saved in localStorage
     const savedUser = localStorage.getItem('idm_user');
-    if (savedUser) {
+    const savedToken = localStorage.getItem('idm_token');
+    
+    if (savedUser && savedToken) {
       try {
         setUser(JSON.parse(savedUser));
       } catch (error) {
-        console.error('Erro ao recuperar usuário salvo:', error);
+        console.error('Error recovering saved user:', error);
         localStorage.removeItem('idm_user');
+        localStorage.removeItem('idm_token');
       }
     }
     setLoading(false);
@@ -53,76 +56,39 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      console.log('Tentando fazer login com:', email);
+      console.log('Attempting login with:', email);
       
-      const { data, error } = await supabase
-        .rpc('authenticate_idm_user', {
-          p_email: email,
-          p_password: password
-        });
+      const response = await apiClient.login(email, password);
 
-      if (error) {
-        console.error('Erro na autenticação:', error);
-        toast.error('Erro ao fazer login');
-        return false;
-      }
-
-      console.log('Resposta da autenticação:', data);
-
-      if (data && data.length > 0 && data[0].success) {
-        const userData = data[0];
-        const userInfo: User = {
-          id: userData.user_id,
-          email: userData.email,
-          username: userData.username,
-          full_name: userData.full_name,
-          role: userData.role
-        };
+      if (response.token && response.user) {
+        const userInfo: User = response.user;
         
         setUser(userInfo);
         localStorage.setItem('idm_user', JSON.stringify(userInfo));
+        localStorage.setItem('idm_token', response.token);
         toast.success(`Bem-vindo, ${userInfo.full_name}!`);
         return true;
       } else {
-        toast.error('Email ou senha incorretos');
+        toast.error('Resposta inválida do servidor');
         return false;
       }
-    } catch (error) {
-      console.error('Erro no login:', error);
-      toast.error('Erro interno do sistema');
+    } catch (error: any) {
+      console.error('Login error:', error);
+      toast.error(error.message || 'Erro ao fazer login');
       return false;
     }
   };
 
   const register = async (email: string, password: string, username: string, fullName: string): Promise<boolean> => {
     try {
-      console.log('Tentando registrar usuário:', email, username);
+      console.log('Attempting registration:', email, username);
       
-      const { error } = await supabase
-        .from('user_idm')
-        .insert([{
-          email,
-          password,
-          username,
-          full_name: fullName,
-          role: 'user'
-        }]);
-
-      if (error) {
-        console.error('Erro no cadastro:', error);
-        if (error.code === '23505') {
-          toast.error('Email ou nome de usuário já existem');
-        } else {
-          toast.error('Erro ao criar conta');
-        }
-        return false;
-      }
-
+      await apiClient.register(email, password, username, fullName);
       toast.success('Conta criada com sucesso! Faça login para continuar.');
       return true;
-    } catch (error) {
-      console.error('Erro no registro:', error);
-      toast.error('Erro interno do sistema');
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      toast.error(error.message || 'Erro ao criar conta');
       return false;
     }
   };
@@ -130,6 +96,7 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('idm_user');
+    localStorage.removeItem('idm_token');
     toast.success('Logout realizado com sucesso');
   };
 

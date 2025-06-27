@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
+import { apiClient } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface PasswordPolicy {
@@ -27,17 +27,9 @@ export const useOrganizationSettings = () => {
 
   const fetchSettings = async () => {
     try {
-      const { data, error } = await supabase
-        .from('organization_settings')
-        .select('*')
-        .single();
+      const data = await apiClient.getOrganizationSettings();
 
-      if (error) {
-        console.error('Erro ao buscar configurações:', error);
-        return;
-      }
-
-      // Converter Json para PasswordPolicy
+      // Parse password_policy if it's a string
       const parsedSettings: OrganizationSettings = {
         ...data,
         password_policy: typeof data.password_policy === 'string' 
@@ -46,8 +38,8 @@ export const useOrganizationSettings = () => {
       };
 
       setSettings(parsedSettings);
-    } catch (error) {
-      console.error('Erro ao buscar configurações:', error);
+    } catch (error: any) {
+      console.error('Error fetching settings:', error);
     } finally {
       setLoading(false);
     }
@@ -55,40 +47,18 @@ export const useOrganizationSettings = () => {
 
   const updateSettings = async (updatedSettings: Partial<OrganizationSettings>) => {
     try {
-      // Convert PasswordPolicy back to JSON for database storage
-      const dbSettings = {
-        ...updatedSettings,
-        ...(updatedSettings.password_policy && {
-          password_policy: updatedSettings.password_policy as any
-        })
-      };
-
-      const { error } = await supabase
-        .from('organization_settings')
-        .update(dbSettings)
-        .eq('id', settings?.id);
-
-      if (error) {
-        console.error('Erro ao atualizar configurações:', error);
-        toast({
-          title: "Erro",
-          description: "Não foi possível salvar as configurações",
-          variant: "destructive",
-        });
-        return false;
-      }
-
+      await apiClient.updateOrganizationSettings(updatedSettings);
       await fetchSettings();
       toast({
         title: "Sucesso",
         description: "Configurações salvas com sucesso",
       });
       return true;
-    } catch (error) {
-      console.error('Erro ao atualizar configurações:', error);
+    } catch (error: any) {
+      console.error('Error updating settings:', error);
       toast({
         title: "Erro", 
-        description: "Não foi possível salvar as configurações",
+        description: error.message || "Não foi possível salvar as configurações",
         variant: "destructive",
       });
       return false;
@@ -96,21 +66,40 @@ export const useOrganizationSettings = () => {
   };
 
   const validatePassword = async (password: string) => {
-    try {
-      const { data, error } = await supabase.rpc('validate_password_policy', {
-        p_password: password
-      });
-
-      if (error) {
-        console.error('Erro ao validar senha:', error);
-        return { is_valid: false, errors: ['Erro ao validar senha'] };
-      }
-
-      return data[0];
-    } catch (error) {
-      console.error('Erro ao validar senha:', error);
-      return { is_valid: false, errors: ['Erro ao validar senha'] };
+    // For now, implement client-side validation
+    // You can implement server-side validation later if needed
+    const errors: string[] = [];
+    
+    if (!settings?.password_policy) {
+      return { is_valid: false, errors: ['Política de senha não configurada'] };
     }
+
+    const policy = settings.password_policy;
+    
+    if (password.length < policy.min_length) {
+      errors.push(`Senha deve ter pelo menos ${policy.min_length} caracteres`);
+    }
+    
+    if (policy.require_uppercase && !/[A-Z]/.test(password)) {
+      errors.push('Senha deve conter pelo menos uma letra maiúscula');
+    }
+    
+    if (policy.require_lowercase && !/[a-z]/.test(password)) {
+      errors.push('Senha deve conter pelo menos uma letra minúscula');
+    }
+    
+    if (policy.require_numbers && !/\d/.test(password)) {
+      errors.push('Senha deve conter pelo menos um número');
+    }
+    
+    if (policy.require_special_chars && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+      errors.push('Senha deve conter pelo menos um caractere especial');
+    }
+
+    return {
+      is_valid: errors.length === 0,
+      errors
+    };
   };
 
   useEffect(() => {
